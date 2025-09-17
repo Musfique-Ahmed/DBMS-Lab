@@ -168,3 +168,5 @@ async def suggest_route(request: RouteRequest):
         "route_coords": chosen_route['coords'],
     }
 
+
+# uvicorn main:app --reload

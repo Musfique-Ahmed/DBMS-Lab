@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="en" class="light"> <!-- Default to light mode -->
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Safe Route Finder - Bangladesh</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide/dist/umd/lucide.min.js"></script>
+    
+    <!-- Leaflet.js for OpenStreetMap -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    
+    <!-- Leaflet.heat for heatmap layer -->
+    <script src="https://unpkg.com/leaflet.heat@0.2.0/dist/leaflet-heat.js"></script>
+    
+    <!-- Nominatim Geocoding Client -->
+    <script src="https://cdn.jsdelivr.net/npm/nominatim-client@1.0.0/dist/nominatim-client.min.js"></script>
+
+    <style>
+        @import url('https://rsms.me/inter/inter.css');
+        body { 
+            font-family: 'Inter', sans-serif; 
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+        .loader {
+            border-top-color: #8b5cf6; /* Purple */
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        /* Custom scrollbar */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background-color: rgba(156, 163, 175, 0.5); border-radius: 4px; }
+        html.dark ::-webkit-scrollbar-thumb { background-color: rgba(107, 114, 128, 0.5); }
+        
+        #map {
+            height: 100%;
+            width: 100%;
+        }
+        .leaflet-container .leaflet-control-attribution {
+            background: rgba(255,255,255,0.7) !important;
+            color: #333;
+        }
+        html.dark .leaflet-container .leaflet-control-attribution {
+            background: rgba(0,0,0,0.7) !important;
+            color: #ccc;
+        }
+        .panic-button {
+            box-shadow: 0 0 20px rgba(239, 68, 68, 0.6);
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0% { transform: scale(1); box-shadow: 0 0 20px rgba(239, 68, 68, 0.6); }
+            50% { transform: scale(1.05); box-shadow: 0 0 30px rgba(239, 68, 68, 0.8); }
+            100% { transform: scale(1); box-shadow: 0 0 20px rgba(239, 68, 68, 0.6); }
+        }
+        .notification-badge {
+            transform: scale(1) translate(50%, -50%);
+        }
+    </style>
+    <script>
+        // Theme toggling logic
+        if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.classList.add('dark');
+        } else {
+            document.documentElement.classList.remove('dark');
+        }
+    </script>
+</head>
+<body class="bg-gray-100 dark:bg-black text-gray-800 dark:text-gray-200">
+    
+    <!-- PANIC BUTTON -->
+    <button id="panic-btn" class="panic-button fixed bottom-8 right-8 z-[1000] w-20 h-20 bg-red-500 text-white rounded-full flex flex-col items-center justify-center font-bold text-lg">
+        <i data-lucide="alert-triangle" class="w-8 h-8"></i>
+        PANIC
+    </button>
+
+    <div class="flex h-screen">
+        <!-- Sidebar Navigation -->
+        <aside class="w-20 flex flex-col items-center bg-white dark:bg-gray-900/50 border-r border-gray-200 dark:border-gray-800 p-4 space-y-6">
+            <div class="flex items-center justify-center text-purple-600 dark:text-purple-500">
+                 <i data-lucide="shield-half" class="w-8 h-8"></i>
+            </div>
+            <nav class="flex flex-col items-center space-y-4 flex-grow">
+                <a href="#" class="p-3 bg-purple-100 dark:bg-purple-800/50 text-purple-600 dark:text-purple-400 rounded-lg" title="Home">
+                    <i data-lucide="home" class="w-6 h-6"></i>
+                </a>
+                <a href="#" class="p-3 text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors" title="Privacy">
+                    <i data-lucide="lock" class="w-6 h-6"></i>
+                </a>
+                <!-- Notification Bell -->
+                 <div class="relative">
+                     <button id="notification-btn" class="p-3 text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors" title="Notifications">
+                         <i data-lucide="bell" class="w-6 h-6"></i>
+                     </button>
+                     <span id="notification-badge" class="notification-badge hidden absolute top-0 right-0 w-4 h-4 bg-red-500 text-white text-xs font-bold rounded-full flex items-center justify-center"></span>
+                     <div id="notification-panel" class="hidden absolute bottom-full mb-2 left-1/2 -translate-x-1/2 w-80 bg-white dark:bg-gray-800 rounded-lg shadow-xl border dark:border-gray-700 z-50">
+                         <div class="p-3 font-bold border-b dark:border-gray-700">Notifications</div>
+                         <div id="notification-list" class="p-2 max-h-80 overflow-y-auto">
+                             <p class="text-center text-gray-400 p-4">No new alerts.</p>
+                         </div>
+                     </div>
+                 </div>
+            </nav>
+            <div class="flex flex-col items-center space-y-4">
+                <button id="theme-toggle" class="p-3 text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors">
+                    <i data-lucide="sun" class="w-6 h-6 block dark:hidden"></i>
+                    <i data-lucide="moon" class="w-6 h-6 hidden dark:block"></i>
+                </button>
+                <a href="#" class="p-3 text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors" title="Settings">
+                    <i data-lucide="settings" class="w-6 h-6"></i>
+                </a>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="flex-1 grid grid-cols-12 gap-6 p-6 overflow-y-auto">
+            
+            <div class="col-span-12 lg:col-span-4 xl:col-span-3">
+                <div class="bg-white dark:bg-gray-900/50 p-6 rounded-2xl border border-gray-200 dark:border-gray-800 h-full flex flex-col">
+                    <h1 class="text-2xl font-bold text-gray-900 dark:text-white mb-1">Safe Route Planner</h1>
+                    <p class="text-gray-500 dark:text-gray-400 mb-6">Your safety guide for navigating Bangladesh.</p>
+                    
+                    <form id="route-form" class="space-y-4">
+                        <div>
+                            <label for="start" class="text-sm font-medium text-gray-700 dark:text-gray-300">Start Location</label>
+                            <div class="mt-1 relative">
+                                <i data-lucide="navigation" class="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400"></i>
+                                <input type="text" id="start" name="start" class="w-full bg-gray-100 dark:bg-gray-800 border-transparent rounded-lg pl-10 p-3 pr-10 focus:ring-2 focus:ring-purple-500 focus:border-transparent" placeholder="Getting location..." required>
+                                <button type="button" id="get-location-btn" class="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-gray-500 hover:text-purple-600 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700">
+                                    <i data-lucide="crosshair" class="w-5 h-5"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label for="destination" class="text-sm font-medium text-gray-700 dark:text-gray-300">Destination</label>
+                            <div class="mt-1 relative">
+                                <i data-lucide="map-pin" class="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400"></i>
+                                <input type="text" id="destination" name="destination" class="w-full bg-gray-100 dark:bg-gray-800 border-transparent rounded-lg pl-10 p-3 focus:ring-2 focus:ring-purple-500 focus:border-transparent" placeholder="e.g., Gulshan, Dhaka" required>
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <label for="time" class="text-sm font-medium text-gray-700 dark:text-gray-300">Time of Visit</label>
+                            <input type="time" id="time" name="time" class="mt-1 w-full bg-gray-100 dark:bg-gray-800 border-transparent rounded-lg p-3 focus:ring-2 focus:ring-purple-500 focus:border-transparent" required>
+                        </div>
+
+
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label for="age" class="text-sm font-medium text-gray-700 dark:text-gray-300">Age</label>
+                                <input type="number" id="age" name="age" class="mt-1 w-full bg-gray-100 dark:bg-gray-800 border-transparent rounded-lg p-3 focus:ring-2 focus:ring-purple-500 focus:border-transparent" placeholder="25" min="1" max="120" required>
+                            </div>
+                            <div>
+                                <label for="gender" class="text-sm font-medium text-gray-700 dark:text-gray-300">Gender</label>
+                                <select id="gender" name="gender" class="mt-1 w-full bg-gray-100 dark:bg-gray-800 border-transparent rounded-lg p-3 focus:ring-2 focus:ring-purple-500 focus:border-transparent">
+                                    <option>Female</option>
+                                    <option>Male</option>
+                                    <option>Other</option>
+                                </select>
+                            </div>
+                        </div>
+                        <button type="submit" class="w-full flex justify-center items-center gap-2 py-3 px-4 rounded-lg text-white font-semibold bg-purple-600 hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 dark:focus:ring-offset-gray-900 transition-all shadow-lg shadow-purple-500/20">
+                            <i data-lucide="navigation"></i>
+                            Find Safest Route
+                        </button>
+                    </form>
+
+                    <div id="results-container" class="mt-6 flex-grow">
+                        <div id="placeholder" class="h-full flex flex-col justify-center items-center text-center text-gray-400 dark:text-gray-600">
+                             <i data-lucide="route" class="w-12 h-12 mb-2"></i>
+                             <p class="font-medium">Route details appear here</p>
+                        </div>
+                        <div id="loading" class="hidden h-full flex flex-col justify-center items-center text-center">
+                            <div class="loader ease-linear rounded-full border-4 border-t-4 border-gray-200 dark:border-gray-700 h-12 w-12"></div>
+                             <p class="mt-4 text-gray-500 dark:text-gray-400">Analyzing routes...</p>
+                        </div>
+                        <div id="results-content" class="hidden">
+                            <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-2">Recommended Route</h3>
+                            <div id="route-details" class="p-4 rounded-lg"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-span-12 lg:col-span-8 xl:col-span-9 bg-gray-200 dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-800 overflow-hidden">
+                <div id="map"></div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            lucide.createIcons();
+            // --- MOCK USER ID ---
+            const MOCK_CURRENT_USER_ID = 1; // In a real app, this would come from a login state
+
+            // --- MAP AND ROUTE LOGIC ---
+            let map;
+            let tileLayer;
+            let heatLayer = null;
+            let routeLine = null;
+            let startMarker = null;
+            let userCoords = null;
+            const dhakaCoords = [23.8103, 90.4125];
+
+            const lightTiles = 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
+            const darkTiles = 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png';
+            const tileAttribution = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>';
+            
+            function initializeMap() {
+                map = L.map('map').setView(dhakaCoords, 13);
+                const isDarkMode = document.documentElement.classList.contains('dark');
+                const tileUrl = isDarkMode ? darkTiles : lightTiles;
+                tileLayer = L.tileLayer(tileUrl, { attribution: tileAttribution }).addTo(map);
+            }
+
+            initializeMap();
+
+            const themeToggle = document.getElementById('theme-toggle');
+            themeToggle.addEventListener('click', () => {
+                const html = document.documentElement;
+                html.classList.toggle('dark');
+                const isDarkMode = html.classList.contains('dark');
+                localStorage.theme = isDarkMode ? 'dark' : 'light';
+                tileLayer.setUrl(isDarkMode ? darkTiles : lightTiles);
+            });
+            
+            const startInput = document.getElementById('start');
+            const getLocationBtn = document.getElementById('get-location-btn');
+            const timeInput = document.getElementById('time');
+            
+            // Set default time
+            const now = new Date();
+            const hours = String(now.getHours()).padStart(2, '0');
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+            timeInput.value = `${hours}:${minutes}`;
+
+            function fetchUserLocation() {
+                startInput.value = 'Getting location...';
+                if (navigator.geolocation) {
+                    navigator.geolocation.getCurrentPosition(position => {
+                        userCoords = {
+                            lat: position.coords.latitude,
+                            lon: position.coords.longitude
+                        };
+                        startInput.value = `Your Current Location`;
+                        if(startMarker) map.removeLayer(startMarker);
+                        startMarker = L.marker([userCoords.lat, userCoords.lon]).addTo(map)
+                            .bindPopup('Your Location').openPopup();
+                        map.setView([userCoords.lat, userCoords.lon], 15);
+                    }, error => {
+                        showModal(`Geolocation error: ${error.message}`);
+                    });
+                } else {
+                    showModal('Your browser does not support geolocation.');
+                }
+            }
+            
+            getLocationBtn.addEventListener('click', fetchUserLocation);
+            fetchUserLocation();
+
+            document.getElementById('route-form').addEventListener('submit', async function(event) {
+                event.preventDefault();
+                
+                const startLocationText = startInput.value;
+                let startCoords;
+
+                if (startLocationText === 'Your Current Location' && userCoords) {
+                    startCoords = userCoords;
+                } else {
+                    try {
+                        const geocoder = nominatim.createClient({
+                            "useragent": "SafeRouteFinderWebApp"
+                        });
+                        const results = await geocoder.search({ q: `${startLocationText}, Bangladesh` });
+                        if (results && results.length > 0) {
+                            startCoords = { lat: parseFloat(results[0].lat), lon: parseFloat(results[0].lon) };
+                        } else {
+                            throw new Error('Location not found.');
+                        }
+                    } catch (error) {
+                        showModal(`Could not find coordinates for '${startLocationText}'. Please be more specific.`);
+                        return;
+                    }
+                }
+
+                const formData = {
+                    start_lat: startCoords.lat,
+                    start_lon: startCoords.lon,
+                    destination: document.getElementById('destination').value,
+                    age: parseInt(document.getElementById('age').value, 10),
+                    gender: document.getElementById('gender').value,
+                    visit_time: document.getElementById('time').value
+                };
+                
+                document.getElementById('placeholder').classList.add('hidden');
+                document.getElementById('results-content').classList.add('hidden');
+                document.getElementById('loading').classList.remove('hidden');
+
+                try {
+                    const response = await fetch('http://127.0.0.1:8000/suggest-route', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(formData),
+                    });
+
+                    if (!response.ok) throw new Error(`Could not retrieve route suggestion. Is the backend server running?`);
+                    
+                    const data = await response.json();
+                    
+                    const routeEl = document.getElementById('route-details');
+                    const route = data.route;
+                    routeEl.className = `p-4 rounded-lg border-l-4 ${route.theme.bg} ${route.theme.border} ${route.theme.text}`;
+                    routeEl.innerHTML = `...`; // Populate route details as before
+
+                    if (heatLayer) map.removeLayer(heatLayer);
+                    if (routeLine) map.removeLayer(routeLine);
+
+                    heatLayer = L.heatLayer(data.heatmap, { radius: 25, blur: 15, max: 1.0 }).addTo(map);
+                    routeLine = L.polyline(data.route_coords, { color: route.risk_color === 'red' ? '#ef4444' : route.risk_color === 'yellow' ? '#f59e0b' : '#22c55e', weight: 5 }).addTo(map);
+                    map.fitBounds(routeLine.getBounds().pad(0.1));
+
+                } catch (error) {
+                    showModal(error.message);
+                } finally {
+                    document.getElementById('loading').classList.add('hidden');
+                    document.getElementById('results-content').classList.remove('hidden');
+                }
+            });
+
+            // --- PANIC AND NOTIFICATION LOGIC ---
+            const panicBtn = document.getElementById('panic-btn');
+            const notificationBtn = document.getElementById('notification-btn');
+            const notificationPanel = document.getElementById('notification-panel');
+            const notificationBadge = document.getElementById('notification-badge');
+            const notificationList = document.getElementById('notification-list');
+
+            panicBtn.addEventListener('click', () => {
+                showModal('Activating Panic Mode. Are you sure?', true, () => {
+                    if (navigator.geolocation) {
+                        navigator.geolocation.getCurrentPosition(async position => {
+                            const { latitude, longitude } = position.coords;
+                            try {
+                                const response = await fetch('http://127.0.0.1:8000/panic', {
+                                    method: 'POST',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify({
+                                        user_id: MOCK_CURRENT_USER_ID,
+                                        lat: latitude,
+                                        lon: longitude,
+                                    })
+                                });
+                                
+                                if (!response.ok) {
+                                    const data = await response.json().catch(() => ({}));
+                                    throw new Error(data.detail || `HTTP error! status: ${response.status}`);
+                                }
+
+                                const data = await response.json();
+                                showModal(`Alert Sent! ${data.notified_count} friend(s) have been notified.`);
+                            } catch (error) {
+                                console.error('Panic Error:', error);
+                                if (error instanceof TypeError && error.message === 'Failed to fetch') {
+                                    showModal('Could not send panic alert. Please check your connection and ensure the server is running.');
+                                } else {
+                                    showModal(`Could not send panic alert. ${error.message}`);
+                                }
+                            }
+                        }, () => {
+                             showModal('Could not get your location to send a panic alert. Please enable location services.');
+                        });
+                    }
+                });
+            });
+
+            notificationBtn.addEventListener('click', () => {
+                notificationPanel.classList.toggle('hidden');
+            });
+
+            async function fetchNotifications() {
+                try {
+                    const response = await fetch(`http://127.0.0.1:8000/notifications/${MOCK_CURRENT_USER_ID}`);
+                    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+                    
+                    const notifications = await response.json();
+                    if (notifications.length > 0) {
+                        notificationBadge.textContent = notifications.length;
+                        notificationBadge.classList.remove('hidden');
+                        notificationList.innerHTML = '';
+                        notifications.forEach(n => {
+                            const notifEl = document.createElement('div');
+                            notifEl.className = 'p-2 border-b dark:border-gray-700 text-sm';
+                            notifEl.innerHTML = `<p class="font-semibold text-red-500">PANIC ALERT</p><p class="text-gray-600 dark:text-gray-300">${n.message}</p><p class="text-xs text-gray-400 mt-1">${new Date(n.time).toLocaleString()}</p>`;
+                            notificationList.appendChild(notifEl);
+                        });
+                    } else {
+                        notificationBadge.classList.add('hidden');
+                        if(notificationList.children.length === 0) {
+                           notificationList.innerHTML = `<p class="text-center text-gray-400 p-4">No new alerts.</p>`;
+                        }
+                    }
+                } catch (error) {
+                    console.error("Failed to fetch notifications:", error);
+                    notificationList.innerHTML = `<p class="text-center text-red-500 p-4">Could not load notifications. Is the server running?</p>`;
+                    notificationBadge.classList.add('hidden');
+                }
+            }
+
+            setInterval(fetchNotifications, 15000);
+            fetchNotifications();
+
+            function showModal(message, isConfirmation = false, onConfirm = () => {}) {
+                const existingModal = document.querySelector('.alert-modal');
+                if(existingModal) existingModal.remove();
+
+                const modal = document.createElement('div');
+                modal.className = 'alert-modal';
+                let buttons = `<button class="ok-btn" style="margin-top: 1rem; padding: 0.5rem 1rem; background: #8b5cf6; color: white; border: none; border-radius: 0.25rem; cursor: pointer;">OK</button>`;
+                if(isConfirmation) {
+                    buttons = `<button class="confirm-btn" style="margin-top: 1rem; padding: 0.5rem 1rem; background: #ef4444; color: white; border: none; border-radius: 0.25rem; cursor: pointer; margin-right: 0.5rem;">Confirm</button>
+                               <button class="cancel-btn" style="margin-top: 1rem; padding: 0.5rem 1rem; background: #6b7280; color: white; border: none; border-radius: 0.25rem; cursor: pointer;">Cancel</button>`;
+                }
+
+                modal.innerHTML = `<div style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 1000;">
+                     <div style="background: white; padding: 2rem; border-radius: 0.5rem; text-align: center; color: black; max-width: 90%; width: 400px;">
+                         <p>${message}</p>
+                         <div>${buttons}</div>
+                     </div>
+                 </div>`;
+                document.body.appendChild(modal);
+                
+                modal.querySelector('.ok-btn')?.addEventListener('click', () => modal.remove());
+                modal.querySelector('.cancel-btn')?.addEventListener('click', () => modal.remove());
+                modal.querySelector('.confirm-btn')?.addEventListener('click', () => {
+                    onConfirm();
+                    modal.remove();
+                });
+            }
+        });
+    </script>
+</body>
+</html>
+
+
+

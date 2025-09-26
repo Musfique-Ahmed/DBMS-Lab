@@ -4,7 +4,8 @@ from .database import Base
 import datetime
 
 # Association Table for the many-to-many relationship between users (friends)
-friendship_table = Table('friendships', Base.metadata,
+friendship_table = Table(
+    'friendships', Base.metadata,
     Column('user_id', Integer, ForeignKey('users.id'), primary_key=True),
     Column('friend_id', Integer, ForeignKey('users.id'), primary_key=True)
 )
@@ -15,20 +16,19 @@ class User(Base):
     id = Column(Integer, primary_key=True, index=True)
     username = Column(String(50), unique=True, index=True, nullable=False)
     phone_number = Column(String(20), unique=True, index=True, nullable=False)
-    # In a real app, this would be a hashed password
     password_hash = Column(String(255), nullable=False)
-    
     last_known_lat = Column(Float, nullable=True)
     last_known_lon = Column(Float, nullable=True)
     last_seen = Column(DateTime, default=datetime.datetime.utcnow)
 
-    # Many-to-many relationship for friends
+    # Many-to-many relationship for friends (self-referential)
     friends = relationship(
         "User",
         secondary=friendship_table,
         primaryjoin=id == friendship_table.c.user_id,
         secondaryjoin=id == friendship_table.c.friend_id,
-        backref="friend_of"
+        backref="friend_of",
+        remote_side=[id]
     )
 
     panic_alerts = relationship("PanicAlert", back_populates="user")
@@ -50,14 +50,14 @@ class Notification(Base):
     __tablename__ = "notifications"
 
     id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(Integer, ForeignKey("users.id")) # The user to be notified
+    user_id = Column(Integer, ForeignKey("users.id"))
     message = Column(String(255), nullable=False)
     is_read = Column(Boolean, default=False)
     timestamp = Column(DateTime, default=datetime.datetime.utcnow)
 
     user = relationship("User", back_populates="notifications")
 
-# --- Keep existing models for route planning ---
+# --- Route planning models ---
 class Location(Base):
     __tablename__ = "location"
     location_id = Column(Integer, primary_key=True, index=True)
@@ -84,4 +84,3 @@ class Victim(Base):
     sex = Column(String(1))
     crime_id = Column(Integer, ForeignKey("crime.crime_id"))
     crime = relationship("Crime", back_populates="victims")
-

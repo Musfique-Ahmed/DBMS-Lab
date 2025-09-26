@@ -1,4 +1,5 @@
 from fastapi import FastAPI, HTTPException, Depends
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 from sqlalchemy import create_engine, Column, Integer, String, DateTime
@@ -8,6 +9,15 @@ import hashlib
 from datetime import datetime
 
 app = FastAPI()
+
+# Enable CORS for frontend-backend communication
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # Change to your frontend URL in production
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 SQLALCHEMY_DATABASE_URL = "mysql+pymysql://root:@localhost/mysafety"
 engine = create_engine(SQLALCHEMY_DATABASE_URL, connect_args={"charset": "utf8mb4"})
@@ -54,7 +64,6 @@ async def register_user(user: UserCreate, db: Session = Depends(get_db)):
     db_user = db.query(User).filter(User.email == user.email).first()
     if db_user:
         raise HTTPException(status_code=400, detail="Email already registered")
-    # Create a new user
     hashed_password = hash_password(user.password)
     new_user = User(
         email=user.email,
@@ -73,9 +82,12 @@ async def register_user(user: UserCreate, db: Session = Depends(get_db)):
 async def login_user(user: UserLogin, db: Session = Depends(get_db)):
     db_user = db.query(User).filter(User.email == user.email).first()
     if not db_user:
+        print(f"Login failed: email {user.email} not found")
         raise HTTPException(status_code=400, detail="Email not registered")
     if not verify_password(db_user.password_hash, user.password):
+        print(f"Login failed: wrong password for {user.email}")
         raise HTTPException(status_code=400, detail="Incorrect password")
+    print(f"Login success for {user.email}")
     return {
         "message": "Login successful",
         "user": {
@@ -87,3 +99,7 @@ async def login_user(user: UserLogin, db: Session = Depends(get_db)):
             "created_at": db_user.created_at
         }
     }
+
+@app.get("/")
+def read_root():
+    return {"message": "Welcome to Safe Route App API"}

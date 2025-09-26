@@ -283,25 +283,37 @@
       </div>
     </div>
   </div>
-  <script>
-    document.getElementById('signupForm').addEventListener('submit', function(event) {
-      event.preventDefault();
-      const username = document.getElementById('username').value.trim();
-      const email = document.getElementById('email').value.trim();
-      const password = document.getElementById('password').value.trim();
-      const confirm = document.getElementById('confirm_password').value.trim();
-      const errorMsg = document.getElementById('error-message');
-      if (!username || !email || !password || !confirm) {
-        errorMsg.textContent = "Please fill in all fields.";
-      } else if (password !== confirm) {
+    <script>
+    document.getElementById('signupForm').addEventListener('submit', async function(event) {
+    event.preventDefault();
+    const username = document.getElementById('username').value.trim();
+    const email = document.getElementById('email').value.trim();
+    const password = document.getElementById('password').value.trim();
+    const confirm = document.getElementById('confirm_password').value.trim();
+    const errorMsg = document.getElementById('error-message');
+
+    if (password !== confirm) {
         errorMsg.textContent = "Passwords do not match.";
-      } else {
-        errorMsg.textContent = "";
-        // Signup logic here (AJAX or form submission)
-        alert("Signup successful! Redirecting to login...");
+        return;
+    }
+
+    try {
+        const response = await fetch('http://localhost:8000/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, email, password })
+        });
+        const result = await response.json();
+        if (response.ok) {
+        alert(result.message);
         window.location.href = "login.html";
-      }
+        } else {
+        errorMsg.textContent = result.detail || "Signup failed";
+        }
+    } catch (err) {
+        errorMsg.textContent = "Server error";
+    }
     });
-  </script>
+    </script>
 </body>
 </html>

@@ -316,9 +316,9 @@
       <form id="loginForm" autocomplete="off" style="width:100%;display:flex;flex-direction:column;align-items:center;">
         <div class="input-group" style="width:100%;max-width:260px;margin-bottom:16px;">
           <span class="icon">
-            <img src="contents/username.png" alt="Username Icon" style="width:18px; height:18px; object-fit:contain;">
+            <img src="contents/email.jpg" alt="Username Icon" style="width:18px; height:18px; object-fit:contain;">
           </span>
-          <input type="text" id="username" name="username" placeholder="Username" required>
+          <input type="text" id="email" name="email" placeholder="Email" required>
         </div>
         <div class="input-group" style="width:100%;max-width:260px;margin-bottom:16px;">
           <span class="icon">
@@ -358,18 +358,30 @@
     </div>
   </div>
   <script>
-    document.getElementById('loginForm').addEventListener('submit', function(event) {
-      event.preventDefault();
-      const username = document.getElementById('username').value.trim();
-      const password = document.getElementById('password').value.trim();
-      if (!username || !password) {
-        document.getElementById('error-message').textContent = "Please fill in both fields.";
+  document.getElementById('loginForm').addEventListener('submit', async function(event) {
+    event.preventDefault();
+    const email = document.getElementById('email').value.trim();
+    const password = document.getElementById('password').value.trim();
+    const errorMsg = document.getElementById('error-message');
+
+    try {
+      const response = await fetch('http://localhost:8000/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password })
+      });
+      const result = await response.json();
+      if (response.ok) {
+        // Login successful, redirect or show message
+        alert(result.message);
+        // window.location.href = "dashboard.html"; // or your next page
       } else {
-        document.getElementById('error-message').textContent = "";
-        // Submit logic here (AJAX or form submission)
-        // Example: location.href = "/dashboard";
+        errorMsg.textContent = result.detail || "Login failed";
       }
-    });
+    } catch (err) {
+      errorMsg.textContent = "Server error";
+    }
+  });
   </script>
 </body>
 </html>

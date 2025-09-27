@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Safety - Login & Signup</title>
+    <!-- Load Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Configure Tailwind for the custom green theme -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'safety-green': '#4ADE80', // Primary bright green accent
+                        'safety-dark': '#0F172A',  // Dark background
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                }
+            }
+        }
+    </script>
+    <style>
+        /* Custom CSS to enable the horizontal sliding transition */
+        #screen-container {
+            display: flex;
+            width: 300%; /* Three panels side-by-side */
+            height: 100%;
+            transition: transform 0.5s cubic-bezier(0.83, 0, 0.17, 1); /* Smooth, app-like transition */
+        }
+
+        .panel {
+            width: 33.3333%; /* Each panel takes up one-third of the container */
+            flex-shrink: 0;
+            padding: 2rem 1.5rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            overflow-y: auto;
+            max-height: 100vh;
+        }
+
+        /* Hide the scrollbar for aesthetics on mobile-like layout */
+        .panel::-webkit-scrollbar {
+            display: none;
+        }
+        .panel {
+            -ms-overflow-style: none;  /* IE and Edge */
+            scrollbar-width: none;  /* Firefox */
+        }
+
+        /* Force Inter font loading */
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap');
+    </style>
+</head>
+<body class="bg-safety-dark text-white font-sans min-h-screen flex items-center justify-center">
+
+    <!-- Main Mobile Frame Container -->
+    <div id="app" class="w-full max-w-sm h-[90vh] bg-slate-900 shadow-2xl rounded-3xl overflow-hidden relative">
+
+        <!-- Screen Container for 3-Panel Slide Effect -->
+        <div id="screen-container">
+
+            <!-- 1. SPLASH / LOGO SCREEN -->
+            <div id="splash-screen" class="panel text-center">
+                <!-- Using the uploaded logo image -->
+                <img src="contents/image.png" alt="My Safety Project Logo"
+     class="w-24 h-24 mb-6 object-contain rounded-full shadow-lg shadow-safety-green/30">
+
+
+
+
+                <h1 class="text-4xl font-extrabold text-safety-green mb-2">MY SAFETY</h1>
+                <p class="text-lg font-light text-gray-300">Smart Routes, Safer Cities</p>
+                <p class="text-sm text-gray-400 mt-2"></p>
+
+                <div class="mt-20 w-full">
+                    <p class="text-sm text-gray-400 mb-4">Tap to start your secure journey.</p>
+                    <button onclick="changeScreen('login')"
+                        class="w-full py-3 bg-safety-green text-safety-dark font-semibold rounded-xl shadow-lg hover:bg-green-300 transition duration-150 transform hover:scale-[1.02]">
+                        Get Started
+                    </button>
+                </div>
+            </div>
+
+            <!-- 2. LOGIN SCREEN -->
+            <div id="login-screen" class="panel">
+                <div class="w-full">
+                    <h2 class="text-3xl font-bold text-safety-green mb-2 text-left">Welcome Back</h2>
+                    <p class="text-md text-gray-400 mb-8 text-left">Sign in to report or check area safety.</p>
+
+                    <form onsubmit="handleLogin(event)" class="space-y-6">
+                        <!-- Email Input -->
+                        <div class="relative">
+                            <input type="email" id="login-email" required placeholder=" "
+                                class="w-full peer px-4 py-3 bg-slate-800 border border-slate-700 rounded-xl focus:ring-safety-green focus:border-safety-green outline-none transition text-white placeholder-transparent">
+                            <label for="login-email"
+                                class="absolute left-4 top-3.5 text-gray-500 text-sm transition-all duration-300 transform peer-placeholder-shown:text-base peer-placeholder-shown:text-gray-500 peer-placeholder-shown:top-3.5 peer-focus:top-1.5 peer-focus:text-safety-green peer-focus:text-xs">
+                                Enter Your Email
+                            </label>
+                        </div>
+
+                        <!-- Password Input -->
+                        <div class="relative">
+                            <input type="password" id="login-password" required placeholder=" "
+                                class="w-full peer px-4 py-3 bg-slate-800 border border-slate-700 rounded-xl focus:ring-safety-green focus:border-safety-green outline-none transition text-white placeholder-transparent">
+                            <label for="login-password"
+                                class="absolute left-4 top-3.5 text-gray-500 text-sm transition-all duration-300 transform peer-placeholder-shown:text-base peer-placeholder-shown:text-gray-500 peer-placeholder-shown:top-3.5 peer-focus:top-1.5 peer-focus:text-safety-green peer-focus:text-xs">
+                                Enter Your Password
+                            </label>
+                        </div>
+
+                        <div class="flex justify-between items-center text-sm">
+                            <div class="flex items-center">
+                                <input id="remember-me" type="checkbox"
+                                    class="h-4 w-4 text-safety-green bg-slate-800 border-slate-700 rounded focus:ring-safety-green">
+                                <label for="remember-me" class="ml-2 text-gray-400">Remember Me</label>
+                            </div>
+                            <a href="#" class="text-safety-green hover:text-green-300 transition duration-150">
+                                Forgot Password?
+                            </a>
+                        </div>
+
+                        <!-- Log In Button -->
+                        <button type="submit"
+                            class="w-full py-4 bg-safety-green text-safety-dark font-bold rounded-xl shadow-lg shadow-safety-green/50 hover:bg-green-300 transition duration-150 transform hover:scale-[1.02]">
+                            LOG IN
+                        </button>
+                    </form>
+
+                    <!-- OR Divider -->
+                    <div class="flex items-center my-6">
+                        <div class="flex-grow border-t border-slate-700"></div>
+                        <span class="mx-4 text-sm text-gray-500">Or New User?</span>
+                        <div class="flex-grow border-t border-slate-700"></div>
+                    </div>
+
+                    <!-- Sign Up Link -->
+                    <button onclick="changeScreen('signup')"
+                        class="w-full py-3 border border-safety-green text-safety-green font-semibold rounded-xl hover:bg-safety-green/10 transition duration-150">
+                        Sign Up Now
+                    </button>
+
+                </div>
+            </div>
+
+            <!-- 3. SIGN UP SCREEN -->
+            <div id="signup-screen" class="panel">
+                <div class="w-full">
+                    <h2 class="text-3xl font-bold text-safety-green mb-2 text-left">Create Account</h2>
+                    <p class="text-md text-gray-400 mb-8 text-left">Join My Safety to contribute to safer cities.</p>
+
+                    <form onsubmit="handleSignup(event)" class="space-y-6">
+                        <!-- Name Input -->
+                        <div class="relative">
+                            <input type="text" id="signup-name" required placeholder=" "
+                                class="w-full peer px-4 py-3 bg-slate-800 border border-slate-700 rounded-xl focus:ring-safety-green focus:border-safety-green outline-none transition text-white placeholder-transparent">
+                            <label for="signup-name"
+                                class="absolute left-4 top-3.5 text-gray-500 text-sm transition-all duration-300 transform peer-placeholder-shown:text-base peer-placeholder-shown:text-gray-500 peer-placeholder-shown:top-3.5 peer-focus:top-1.5 peer-focus:text-safety-green peer-focus:text-xs">
+                                Enter Your Full Name
+                            </label>
+                        </div>
+
+                        <!-- Email Input -->
+                        <div class="relative">
+                            <input type="email" id="signup-email" required placeholder=" "
+                                class="w-full peer px-4 py-3 bg-slate-800 border border-slate-700 rounded-xl focus:ring-safety-green focus:border-safety-green outline-none transition text-white placeholder-transparent">
+                            <label for="signup-email"
+                                class="absolute left-4 top-3.5 text-gray-500 text-sm transition-all duration-300 transform peer-placeholder-shown:text-base peer-placeholder-shown:text-gray-500 peer-placeholder-shown:top-3.5 peer-focus:top-1.5 peer-focus:text-safety-green peer-focus:text-xs">
+                                Enter Your Email
+                            </label>
+                        </div>
+
+                        <!-- Password Input -->
+                        <div class="relative">
+                            <input type="password" id="signup-password" required placeholder=" "
+                                class="w-full peer px-4 py-3 bg-slate-800 border border-slate-700 rounded-xl focus:ring-safety-green focus:border-safety-green outline-none transition text-white placeholder-transparent">
+                            <label for="signup-password"
+                                class="absolute left-4 top-3.5 text-gray-500 text-sm transition-all duration-300 transform peer-placeholder-shown:text-base peer-placeholder-shown:text-gray-500 peer-placeholder-shown:top-3.5 peer-focus:top-1.5 peer-focus:text-safety-green peer-focus:text-xs">
+                                Create Password
+                            </label>
+                        </div>
+
+                        <!-- Confirm Password Input (optional but good practice) -->
+                        <div class="relative">
+                            <input type="password" id="signup-confirm-password" required placeholder=" "
+                                class="w-full peer px-4 py-3 bg-slate-800 border border-slate-700 rounded-xl focus:ring-safety-green focus:border-safety-green outline-none transition text-white placeholder-transparent">
+                            <label for="signup-confirm-password"
+                                class="absolute left-4 top-3.5 text-gray-500 text-sm transition-all duration-300 transform peer-placeholder-shown:text-base peer-placeholder-shown:text-gray-500 peer-placeholder-shown:top-3.5 peer-focus:top-1.5 peer-focus:text-safety-green peer-focus:text-xs">
+                                Confirm Password
+                            </label>
+                        </div>
+
+                        <!-- Sign Up Button -->
+                        <button type="submit"
+                            class="w-full py-4 bg-safety-green text-safety-dark font-bold rounded-xl shadow-lg shadow-safety-green/50 hover:bg-green-300 transition duration-150 transform hover:scale-[1.02]">
+                            SIGN UP
+                        </button>
+                    </form>
+
+                    <!-- Already have an account? Link -->
+                    <p class="text-center text-sm mt-6 text-gray-400">
+                        Already have an account?
+                        <button onclick="changeScreen('login')" class="text-safety-green hover:underline font-semibold ml-1">
+                            Log In
+                        </button>
+                    </p>
+                </div>
+            </div>
+
+        </div> <!-- End Screen Container -->
+
+        <!-- Custom Alert Box (Replaces alert()) -->
+        <div id="custom-alert" class="hidden absolute top-0 left-0 right-0 p-4 text-center text-sm font-medium bg-red-600 text-white transition-all duration-300">
+            <!-- Message goes here -->
+        </div>
+
+    </div> <!-- End Main Container -->
+
+    <script>
+        // State management for screen transitions
+        const screenContainer = document.getElementById('screen-container');
+        const alertBox = document.getElementById('custom-alert');
+
+        /**
+         * Changes the visible screen using a CSS transform for the sliding effect.
+         * @param {('splash'|'login'|'signup')} screen - The name of the screen to transition to.
+         */
+        function changeScreen(screen) {
+            let translateValue = '0%';
+            if (screen === 'login') {
+                translateValue = '-33.3333%';
+            } else if (screen === 'signup') {
+                translateValue = '-66.6666%';
+            } else {
+                // 'splash' or default
+                translateValue = '0%';
+            }
+            screenContainer.style.transform = `translateX(${translateValue})`;
+        }
+
+        /**
+         * Custom alert function to show non-blocking messages (replaces alert()).
+         */
+        function showAlert(message, isError = true) {
+            alertBox.textContent = message;
+            alertBox.className = `absolute top-0 left-0 right-0 p-4 text-center text-sm font-medium transition-all duration-300 z-10 ${isError ? 'bg-red-600' : 'bg-safety-green text-safety-dark'}`;
+            alertBox.classList.remove('hidden');
+
+            setTimeout(() => {
+                alertBox.classList.add('hidden');
+            }, 3000); // Hide after 3 seconds
+        }
+
+        /**
+         * Handles the login form submission.
+         */
+        function handleLogin(event) {
+            event.preventDefault();
+            const email = document.getElementById('login-email').value;
+            const password = document.getElementById('login-password').value;
+
+            // In a real project, you would connect to your DBMS/backend here
+            console.log('Attempting Login:', { email, password });
+
+            // Placeholder logic: Successful login demonstration
+            showAlert(`Login successful for ${email}! Welcome to My Safety.`, false);
+        }
+
+        /**
+         * Handles the sign-up form submission.
+         */
+        function handleSignup(event) {
+            event.preventDefault();
+            const name = document.getElementById('signup-name').value;
+            const email = document.getElementById('signup-email').value;
+            const password = document.getElementById('signup-password').value;
+            const confirmPassword = document.getElementById('signup-confirm-password').value;
+
+            if (password !== confirmPassword) {
+                showAlert("Error: Passwords do not match. Please try again.");
+                return;
+            }
+
+            // In a real project, you would register the new user here
+            console.log('Attempting Signup:', { name, email, password });
+
+            // Placeholder logic: Successful sign-up demonstration
+            showAlert(`Account created for ${name}! Please log in.`, false);
+            // Optionally move to the login screen after successful sign up
+            setTimeout(() => changeScreen('login'), 1500);
+        }
+
+        // Initialize the app to the splash screen
+        window.onload = () => {
+             // You can uncomment the line below to skip the splash screen if preferred
+             // changeScreen('login');
+        };
+    </script>
+</body>
+</html>

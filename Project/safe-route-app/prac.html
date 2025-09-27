@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Dashboard - Safe Route App</title>
+  <link href="https://fonts.googleapis.com/css?family=Montserrat:400,700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --main-blue: #1b4e8a;
+      --main-green: #6ad13a;
+      --main-cyan: #00b6c9;
+      --main-dark: #181c2f;
+      --main-light: #eaf6fb;
+      --main-gradient: linear-gradient(135deg, #eaf6fb 0%, #1b4e8a 100%);
+      --accent-gradient: linear-gradient(90deg, #1b4e8a 0%, #6ad13a 100%);
+    }
+    body {
+      font-family: 'Montserrat', Arial, sans-serif;
+      background: var(--main-gradient);
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+    }
+    header {
+      background: var(--main-blue);
+      color: #fff;
+      padding: 20px;
+      text-align: center;
+    }
+    header h1 {
+      margin: 0;
+      font-size: 2.5rem;
+    }
+    nav {
+      background: #fff;
+      padding: 15px;
+      display: flex;
+      justify-content: space-around;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    }
+    nav a {
+      text-decoration: none;
+      color: var(--main-blue);
+      font-weight: bold;
+      padding: 10px;
+      transition: color 0.3s;
+    }
+    nav a:hover {
+      color: var(--main-green);
+    }
+    .container {
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      max-width: 100%;
+      overflow-x: auto;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+    th, td {
+      padding: 12px;
+      text-align: left;
+      border-bottom: 1px solid #ccc;
+    }
+    th {
+      background-color: var(--main-blue);
+      color: white;
+    }
+    td {
+      background-color: #f9f9f9;
+    }
+    .action-btn {
+      background-color: var(--main-green);
+      color: white;
+      padding: 5px 10px;
+      border-radius: 5px;
+      cursor: pointer;
+      text-align: center;
+      transition: background-color 0.3s;
+    }
+    .action-btn:hover {
+      background-color: var(--main-blue);
+    }
+    .add-btn {
+      background-color: var(--main-cyan);
+      color: white;
+      padding: 10px;
+      border-radius: 8px;
+      text-align: center;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+    .add-btn:hover {
+      background-color: var(--main-green);
+    }
+    footer {
+      background: var(--main-dark);
+      color: #fff;
+      text-align: center;
+      padding: 15px;
+      margin-top: auto;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Admin Dashboard - Safe Route App</h1>
+  </header>
+
+  <nav>
+    <a href="#">Dashboard</a>
+    <a href="#">Manage Crimes</a>
+    <a href="#">Manage Users</a>
+    <a href="#">Case Assignments</a>
+    <a href="#">Settings</a>
+    <a href="#">Logout</a>
+  </nav>
+
+  <div class="container">
+    <!-- Crime Table -->
+    <div>
+      <h2>Crime Records</h2>
+      <button class="add-btn">Add New Crime</button>
+      <table>
+        <thead>
+          <tr>
+            <th>Crime ID</th>
+            <th>Description</th>
+            <th>Date</th>
+            <th>Status</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="crime-table">
+          <!-- Data will be populated here -->
+        </tbody>
+      </table>
+    </div>
+
+    <!-- User Table -->
+    <div>
+      <h2>User Management</h2>
+      <button class="add-btn">Add New User</button>
+      <table>
+        <thead>
+          <tr>
+            <th>User ID</th>
+            <th>Username</th>
+            <th>Email</th>
+            <th>Role</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="user-table">
+          <!-- Data will be populated here -->
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Case Assignments Table -->
+    <div>
+      <h2>Case Assignments</h2>
+      <button class="add-btn">Assign New Case</button>
+      <table>
+        <thead>
+          <tr>
+            <th>Case ID</th>
+            <th>Case Description</th>
+            <th>Assigned To</th>
+            <th>Status</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="case-assignment-table">
+          <!-- Data will be populated here -->
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <footer>
+    <p>&copy; 2025 Safe Route App | All Rights Reserved</p>
+  </footer>
+
+  <script>
+    // Fetch and display data from the database (example)
+    async function fetchData() {
+      try {
+        const response = await fetch('http://localhost:8000/api/crimes');
+        const data = await response.json();
+        const crimeTable = document.getElementById('crime-table');
+        data.forEach(crime => {
+          const row = document.createElement('tr');
+          row.innerHTML = `
+            <td>${crime.crime_id}</td>
+            <td>${crime.description}</td>
+            <td>${crime.date}</td>
+            <td>${crime.status}</td>
+            <td><button class="action-btn">Edit</button> <button class="action-btn">Delete</button></td>
+          `;
+          crimeTable.appendChild(row);
+        });
+      } catch (err) {
+        console.error('Error fetching crime data:', err);
+      }
+    }
+
+    // Fetch and display user data
+    async function fetchUsers() {
+      try {
+        const response = await fetch('http://localhost:8000/api/users');
+        const users = await response.json();
+        const userTable = document.getElementById('user-table');
+        users.forEach(user => {
+          const row = document.createElement('tr');
+          row.innerHTML = `
+            <td>${user.user_id}</td>
+            <td>${user.username}</td>
+            <td>${user.email}</td>
+            <td>${user.role}</td>
+            <td><button class="action-btn">Edit</button> <button class="action-btn">Delete</button></td>
+          `;
+          userTable.appendChild(row);
+        });
+      } catch (err) {
+        console.error('Error fetching user data:', err);
+      }
+    }
+
+    // Fetch data when the page loads
+    document.addEventListener('DOMContentLoaded', () => {
+      fetchData();
+      fetchUsers();
+    });
+  </script>
+</body>
+</html>

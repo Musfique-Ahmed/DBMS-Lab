@@ -3,243 +3,298 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Admin Dashboard - Safe Route App</title>
-  <link href="https://fonts.googleapis.com/css?family=Montserrat:400,700&display=swap" rel="stylesheet">
+  <title>Admin Dashboard - My Safety</title>
+  <link href="https://fonts.googleapis.com/css?family=Inter:400,500,600,700&display=swap" rel="stylesheet">
   <style>
     :root {
-      --main-blue: #1b4e8a;
-      --main-green: #6ad13a;
-      --main-cyan: #00b6c9;
-      --main-dark: #181c2f;
-      --main-light: #eaf6fb;
-      --main-gradient: linear-gradient(135deg, #eaf6fb 0%, #1b4e8a 100%);
-      --accent-gradient: linear-gradient(90deg, #1b4e8a 0%, #6ad13a 100%);
+      --dark-bg: #0f0f0f;
+      --dark-surface: #1a1a1a;
+      --dark-card: #2a2a2a;
+      --text-primary: #ffffff;
+      --text-secondary: #a0a0a0;
+      --text-muted: #666666;
+      --accent-purple: #8b5cf6;
+      --accent-gray: #6b7280;
+      --border-color: #333333;
     }
-    body {
-      font-family: 'Montserrat', Arial, sans-serif;
-      background: var(--main-gradient);
+    * {
       margin: 0;
       padding: 0;
+      box-sizing: border-box;
+    }
+    body {
+      font-family: 'Inter', Arial, sans-serif;
+      background: var(--dark-bg);
+      color: var(--text-primary);
+      line-height: 1.6;
+    }
+    .header {
+      background: var(--dark-surface);
+      padding: 1rem 2rem;
       display: flex;
-      flex-direction: column;
-      min-height: 100vh;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid var(--border-color);
     }
-    header {
-      background: var(--main-blue);
-      color: #fff;
-      padding: 20px;
-      text-align: center;
-    }
-    header h1 {
-      margin: 0;
-      font-size: 2.5rem;
-    }
-    nav {
-      background: #fff;
-      padding: 15px;
+    .logo {
       display: flex;
-      justify-content: space-around;
-      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+      align-items: center;
+      gap: 0.5rem;
     }
-    nav a {
-      text-decoration: none;
-      color: var(--main-blue);
+    .logo-icon {
+      width: 32px;
+      height: 32px;
+      background: var(--accent-purple);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
       font-weight: bold;
-      padding: 10px;
-      transition: color 0.3s;
     }
-    nav a:hover {
-      color: var(--main-green);
+    .logo-text {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--text-primary);
     }
-    .container {
-      padding: 20px;
+    .nav-links {
       display: flex;
-      flex-direction: column;
-      gap: 20px;
-      max-width: 100%;
-      overflow-x: auto;
+      gap: 2rem;
+      align-items: center;
+    }
+    .nav-links a {
+      color: var(--text-secondary);
+      text-decoration: none;
+      font-weight: 500;
+      transition: color 0.2s;
+    }
+    .nav-links a:hover {
+      color: var(--text-primary);
+    }
+    .login-btn {
+      background: white;
+      color: var(--dark-bg);
+      border: 1px solid var(--border-color);
+      padding: 0.5rem 1rem;
+      border-radius: 6px;
+      text-decoration: none;
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      transition: all 0.2s;
+    }
+    .login-btn:hover {
+      background: var(--text-secondary);
+    }
+    .main-content {
+      padding: 2rem;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    .dashboard-title {
+      font-size: 2.5rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin-bottom: 0.5rem;
+    }
+    .dashboard-subtitle {
+      font-size: 1rem;
+      color: var(--text-secondary);
+      margin-bottom: 2rem;
+    }
+    .crime-reports-section {
+      background: var(--dark-card);
+      border-radius: 12px;
+      padding: 2rem;
+      margin-bottom: 2rem;
+    }
+    .section-title {
+      font-size: 1.5rem;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: 0.5rem;
+    }
+    .section-description {
+      color: var(--text-secondary);
+      margin-bottom: 1.5rem;
     }
     table {
       width: 100%;
       border-collapse: collapse;
-      margin-top: 20px;
-      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      background: transparent;
     }
     th, td {
-      padding: 12px;
+      padding: 1rem;
       text-align: left;
-      border-bottom: 1px solid #ccc;
+      border-bottom: 1px solid var(--border-color);
     }
     th {
-      background-color: var(--main-blue);
-      color: white;
+      color: var(--text-secondary);
+      font-weight: 500;
+      font-size: 0.875rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
     }
     td {
-      background-color: #f9f9f9;
+      color: var(--text-primary);
+    }
+    .status-badge {
+      padding: 0.25rem 0.75rem;
+      border-radius: 9999px;
+      font-size: 0.75rem;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .status-in-progress {
+      background: var(--accent-purple);
+      color: white;
+    }
+    .status-resolved {
+      background: var(--accent-gray);
+      color: white;
+    }
+    .status-pending {
+      background: var(--accent-gray);
+      color: white;
     }
     .action-btn {
-      background-color: var(--main-green);
-      color: white;
-      padding: 5px 10px;
-      border-radius: 5px;
+      background: transparent;
+      color: var(--text-secondary);
+      border: none;
+      padding: 0.5rem;
       cursor: pointer;
-      text-align: center;
-      transition: background-color 0.3s;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.875rem;
+      transition: color 0.2s;
     }
     .action-btn:hover {
-      background-color: var(--main-blue);
+      color: var(--text-primary);
     }
-    .add-btn {
-      background-color: var(--main-cyan);
+    .footer {
+      background: var(--dark-surface);
+      padding: 1rem 2rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      color: var(--text-secondary);
+      font-size: 0.875rem;
+    }
+    .footer-icon {
+      width: 20px;
+      height: 20px;
+      background: var(--accent-purple);
+      border-radius: 4px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
       color: white;
-      padding: 10px;
-      border-radius: 8px;
-      text-align: center;
-      cursor: pointer;
-      transition: background-color 0.3s;
-    }
-    .add-btn:hover {
-      background-color: var(--main-green);
-    }
-    footer {
-      background: var(--main-dark);
-      color: #fff;
-      text-align: center;
-      padding: 15px;
-      margin-top: auto;
+      font-size: 0.75rem;
+      font-weight: bold;
     }
   </style>
 </head>
 <body>
-  <header>
-    <h1>Admin Dashboard - Safe Route App</h1>
-  </header>
+  <div class="header">
+    <div class="logo">
+      <div class="logo-icon">🛡️</div>
+      <div class="logo-text">My Safety</div>
+    </div>
+    <div class="nav-links">
+      <a href="#">Report Crime</a>
+      <a href="#">Report Status</a>
+      <a href="#">Admin Dashboard</a>
+    </div>
+    <a href="#" class="login-btn">
+      <span>→</span>
+      Login
+    </a>
+  </div>
 
-  <nav>
-    <a href="#">Dashboard</a>
-    <a href="#">Manage Crimes</a>
-    <a href="#">Manage Users</a>
-    <a href="#">Case Assignments</a>
-    <a href="#">Settings</a>
-    <a href="#">Logout</a>
-  </nav>
+  <div class="main-content">
+    <h1 class="dashboard-title">Admin Dashboard</h1>
+    <p class="dashboard-subtitle">Manage and review community-submitted crime reports.</p>
 
-  <div class="container">
-    <!-- Crime Table -->
-    <div>
-      <h2>Crime Records</h2>
-      <button class="add-btn">Add New Crime</button>
+    <div class="crime-reports-section">
+      <h2 class="section-title">Crime Reports</h2>
+      <p class="section-description">A list of all submitted crime reports. Select a report to view details and generate an AI summary.</p>
+      
       <table>
         <thead>
           <tr>
-            <th>Crime ID</th>
-            <th>Description</th>
-            <th>Date</th>
+            <th>Report ID</th>
+            <th>Location</th>
             <th>Status</th>
             <th>Actions</th>
           </tr>
         </thead>
-        <tbody id="crime-table">
-          <!-- Data will be populated here -->
-        </tbody>
-      </table>
-    </div>
-
-    <!-- User Table -->
-    <div>
-      <h2>User Management</h2>
-      <button class="add-btn">Add New User</button>
-      <table>
-        <thead>
+        <tbody>
           <tr>
-            <th>User ID</th>
-            <th>Username</th>
-            <th>Email</th>
-            <th>Role</th>
-            <th>Actions</th>
+            <td>CR-BD-001</td>
+            <td>Road 1, Block A, Mirpur</td>
+            <td><span class="status-badge status-in-progress">In Progress</span></td>
+            <td>
+              <button class="action-btn">
+                <span>📄</span>
+                Summarize
+              </button>
+            </td>
           </tr>
-        </thead>
-        <tbody id="user-table">
-          <!-- Data will be populated here -->
-        </tbody>
-      </table>
-    </div>
-
-    <!-- Case Assignments Table -->
-    <div>
-      <h2>Case Assignments</h2>
-      <button class="add-btn">Assign New Case</button>
-      <table>
-        <thead>
           <tr>
-            <th>Case ID</th>
-            <th>Case Description</th>
-            <th>Assigned To</th>
-            <th>Status</th>
-            <th>Actions</th>
+            <td>CR-BD-002</td>
+            <td>House 5, Road 2, Dhanmondi</td>
+            <td><span class="status-badge status-resolved">Resolved</span></td>
+            <td>
+              <button class="action-btn">
+                <span>📄</span>
+                Summarize
+              </button>
+            </td>
           </tr>
-        </thead>
-        <tbody id="case-assignment-table">
-          <!-- Data will be populated here -->
+          <tr>
+            <td>CR-BD-003</td>
+            <td>Near Gulshan 2 Circle</td>
+            <td><span class="status-badge status-pending">Pending</span></td>
+            <td>
+              <button class="action-btn">
+                <span>📄</span>
+                Summarize
+              </button>
+            </td>
+          </tr>
+          <tr>
+            <td>CR-BD-004</td>
+            <td>Kawran Bazar</td>
+            <td><span class="status-badge status-in-progress">In Progress</span></td>
+            <td>
+              <button class="action-btn">
+                <span>📄</span>
+                Summarize
+              </button>
+            </td>
+          </tr>
+          <tr>
+            <td>CR-BD-005</td>
+            <td>Armenian Church, Old Dhaka</td>
+            <td><span class="status-badge status-resolved">Resolved</span></td>
+            <td>
+              <button class="action-btn">
+                <span>📄</span>
+                Summarize
+              </button>
+            </td>
+          </tr>
         </tbody>
       </table>
     </div>
   </div>
 
-  <footer>
-    <p>&copy; 2025 Safe Route App | All Rights Reserved</p>
-  </footer>
-
-  <script>
-    // Fetch and display data from the database (example)
-    async function fetchData() {
-      try {
-        const response = await fetch('http://localhost:8000/api/crimes');
-        const data = await response.json();
-        const crimeTable = document.getElementById('crime-table');
-        data.forEach(crime => {
-          const row = document.createElement('tr');
-          row.innerHTML = `
-            <td>${crime.crime_id}</td>
-            <td>${crime.description}</td>
-            <td>${crime.date}</td>
-            <td>${crime.status}</td>
-            <td><button class="action-btn">Edit</button> <button class="action-btn">Delete</button></td>
-          `;
-          crimeTable.appendChild(row);
-        });
-      } catch (err) {
-        console.error('Error fetching crime data:', err);
-      }
-    }
-
-    // Fetch and display user data
-    async function fetchUsers() {
-      try {
-        const response = await fetch('http://localhost:8000/api/users');
-        const users = await response.json();
-        const userTable = document.getElementById('user-table');
-        users.forEach(user => {
-          const row = document.createElement('tr');
-          row.innerHTML = `
-            <td>${user.user_id}</td>
-            <td>${user.username}</td>
-            <td>${user.email}</td>
-            <td>${user.role}</td>
-            <td><button class="action-btn">Edit</button> <button class="action-btn">Delete</button></td>
-          `;
-          userTable.appendChild(row);
-        });
-      } catch (err) {
-        console.error('Error fetching user data:', err);
-      }
-    }
-
-    // Fetch data when the page loads
-    document.addEventListener('DOMContentLoaded', () => {
-      fetchData();
-      fetchUsers();
-    });
-  </script>
+  <div class="footer">
+    <div class="footer-icon">N</div>
+    <span>©2025 My Safety. All rights reserved.</span>
+  </div>
 </body>
 </html>

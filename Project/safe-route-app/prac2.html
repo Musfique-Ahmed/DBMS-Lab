@@ -1,303 +1,636 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>My Safety - Login & Signup</title>
-    <!-- Load Tailwind CSS -->
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>My Safety — Premium Login & Signup (Desktop)</title>
+
+    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Configure Tailwind for the custom green theme -->
+
+    <!-- Inter font -->
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <!-- Tailwind Config -->
     <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        'safety-green': '#4ADE80', // Primary bright green accent
-                        'safety-dark': '#0F172A',  // Dark background
-                    },
-                    fontFamily: {
-                        sans: ['Inter', 'sans-serif'],
-                    },
-                }
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              'safety-green': '#4ADE80', // primary accent
+              'safety-dark': '#070B15',  // ultra dark bg
+              'safety-red': '#B91C1C',  // alert accent
+              'ink': '#0A0E1A',
+              'slate-850': '#0E1322',
+            },
+            fontFamily: {
+              sans: ['Inter', 'system-ui', 'ui-sans-serif', 'Segoe UI', 'Roboto', 'Helvetica Neue', 'Arial'],
+            },
+            boxShadow: {
+              'glow': '0 0 0 3px rgba(74, 222, 128, 0.15), 0 30px 60px -15px rgba(0,0,0,0.70)',
+              'innerGlow': 'inset 0 0 0 1px rgba(255,255,255,.06), 0 10px 25px rgba(0,0,0,0.35)',
+            },
+            animation: {
+              float: 'float 6s ease-in-out infinite',
+              pulseSoft: 'pulseSoft 2.8s ease-in-out infinite',
+              shimmer: 'shimmer 2.2s linear infinite',
+            },
+            keyframes: {
+              float: {
+                '0%,100%': { transform: 'translateY(0px)' },
+                '50%': { transform: 'translateY(-6px)' },
+              },
+              pulseSoft: {
+                '0%,100%': { opacity: 1 },
+                '50%': { opacity: .65 },
+              },
+              shimmer: {
+                '0%': { backgroundPosition: '-200% 0' },
+                '100%': { backgroundPosition: '200% 0' },
+              },
             }
+          }
         }
+      }
     </script>
+
     <style>
-        /* Custom CSS to enable the horizontal sliding transition */
-        #screen-container {
-            display: flex;
-            width: 300%; /* Three panels side-by-side */
-            height: 100%;
-            transition: transform 0.5s cubic-bezier(0.83, 0, 0.17, 1); /* Smooth, app-like transition */
-        }
+      /* --- 3D & Desktop Layout CSS --- */
+      body{
+        /* Enable 3D Perspective for the rotating card */
+        perspective: 1500px;
+        background: radial-gradient(1200px 800px at 80% -10%, rgba(74,222,128,0.15), transparent 60%),
+                    radial-gradient(900px 700px at -10% 110%, rgba(185,28,28,0.10), transparent 60%),
+                    #070B15;
+        color: #fff;
+        min-height: 100vh;
+        font-synthesis-weight: none;
+        text-rendering: optimizeLegibility;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+        background-attachment: fixed;
+        position: relative;
+        overflow: hidden;
+      }
 
+      /* Noise overlay */
+      body::after{
+        content:'';
+        position: fixed;
+        inset:0;
+        pointer-events:none;
+        opacity: .07;
+        background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" opacity="0.9" width="120" height="120" viewBox="0 0 120 120"><filter id="noiseFilter"><feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="1" stitchTiles="stitch"/></filter><rect width="100%" height="100%" filter="url(%23noiseFilter)"/></svg>');
+        mix-blend-mode: overlay;
+      }
+
+      /* Main 3D Card */
+      #app{
+        /* Apply subtle rotation for a 3D effect */
+        transform: rotateY(8deg) rotateX(2deg) scale(0.95);
+        transform-origin: center;
+        transition: transform 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+      }
+      #app:hover{
+        transform: rotateY(0deg) rotateX(0deg) scale(1.0);
+      }
+
+      /* Card gradient border */
+      .gradient-frame{
+        position: relative;
+        border-radius: 24px;
+        padding: 1px;
+        background: linear-gradient(110deg,
+          rgba(74,222,128,.25),
+          rgba(255,255,255,.05),
+          rgba(74,222,128,.25));
+        background-size: 200% 100%;
+        animation: shimmer 8s linear infinite;
+      }
+      .glass{
+        background: rgba(14,19,34,0.65);
+        backdrop-filter: blur(18px) saturate(115%);
+        -webkit-backdrop-filter: blur(18px) saturate(115%);
+        border-radius: 22px;
+        box-shadow: 0 20px 60px rgba(0,0,0,.45), inset 0 0 0 1px rgba(255,255,255,.06);
+        display: flex; /* Two-column layout */
+      }
+      
+      /* Left Welcome Column (Static) */
+      #welcome-panel {
+        width: 40%;
+        min-width: 320px;
+        padding: 3rem;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        text-align: center;
+        /* Subtle colored gradient overlay on left panel */
+        background: linear-gradient(145deg, rgba(74, 222, 128, 0.08), rgba(10, 14, 26, 0.9));
+        border-right: 1px solid rgba(255, 255, 255, 0.05);
+        /* Use translateZ to visually move this panel slightly forward in 3D space */
+        transform: translateZ(10px);
+        box-shadow: inset -5px 0 15px rgba(0,0,0,0.1);
+      }
+
+      /* Right Form Wrapper */
+      #form-wrapper {
+        flex-grow: 1;
+        width: 60%;
+        min-width: 400px;
+        position: relative;
+        overflow: hidden;
+      }
+
+      /* Sliding container for Login/Signup */
+      #screen-container{
+        display: flex;
+        width: 200%; /* Only Login (50%) and Signup (50%) */
+        height: 100%;
+        transition: transform .7s cubic-bezier(.18,.89,.32,1.28);
+        will-change: transform;
+      }
+      .panel{
+        width: 50%; /* Each panel takes half of the 200% container */
+        flex-shrink: 0;
+        padding: 2.5rem;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        overflow: hidden auto;
+        max-height: 100%;
+        scrollbar-width: none;
+      }
+      .panel::-webkit-scrollbar{ display:none; }
+
+      /* Inputs */
+      .input-group{ position: relative; }
+      .input-icon{
+        position:absolute; left:1rem; top:50%; transform:translateY(-50%);
+        color:#4ADE80; opacity:.9;
+      }
+      .floating-label{
+        position:absolute; left:3rem; top:.95rem; font-size:.9rem;
+        color: rgb(156 163 175 / 1);
+        transition: all .18s ease;
+        pointer-events: none;
+      }
+      input:focus ~ .floating-label,
+      input:not(:placeholder-shown) ~ .floating-label{
+        top:-.5rem; font-size:.7rem; color:#4ADE80;
+      }
+
+      /* Buttons */
+      .btn-primary{
+        background: #4ADE80; color:#0A0E1A; font-weight:800;
+        border-radius: 14px; padding:.9rem 1rem;
+        box-shadow: 0 10px 30px rgba(74,222,128,.25);
+        transition: transform .15s ease, filter .2s ease, box-shadow .2s ease;
+      }
+      .btn-primary:hover{ transform: translateY(-2px); filter: saturate(110%); box-shadow: 0 12px 40px rgba(74,222,128,.35); }
+      .btn-primary:active{ transform: translateY(0); }
+
+      .btn-ghost{
+        border: 1px solid rgb(51 65 85 / .7);
+        border-radius: 14px; padding:.75rem 1rem;
+        background: rgba(2,6,23,.35);
+        transition: border-color .15s ease, background .15s ease, transform .15s ease;
+      }
+      .btn-ghost:hover{ border-color: rgba(148,163,184,.6); background: rgba(2,6,23,.55); transform: translateY(-1px); }
+
+      /* Top alert */
+      #custom-alert{
+        transform: translateY(-100%);
+        opacity: 0;
+      }
+      #custom-alert.show{
+        transform: translateY(0);
+        opacity: 1;
+      }
+
+      /* Loader dot for buttons */
+      .dot{
+        height:.6rem; width:.6rem; border-radius:9999px; background: currentColor; display:inline-block; margin-left:.25rem;
+        animation: pulseSoft 1.4s ease-in-out infinite;
+      }
+      .dot:nth-child(2){ animation-delay: .15s; }
+      .dot:nth-child(3){ animation-delay: .3s; }
+
+      /* Password strength bar */
+      .strength{
+        height: .4rem; border-radius: 9999px; overflow:hidden; background: rgba(148,163,184,.25);
+      }
+      .strength > span{
+        display:block; height:100%; width:0%;
+        transition: width .25s ease;
+        background: linear-gradient(90deg, #ef4444, #f59e0b, #10b981);
+      }
+
+      /* Media query for mobile to ensure responsiveness */
+      @media (max-width: 768px) {
+        #app {
+          max-width: 100%;
+          height: 100vh;
+          transform: none; /* Disable 3D tilt on mobile */
+          box-shadow: none;
+        }
+        .gradient-frame {
+          border-radius: 0;
+        }
+        .glass {
+          border-radius: 0;
+          flex-direction: column;
+          box-shadow: none;
+        }
+        #welcome-panel, #form-wrapper {
+          width: 100%;
+          min-width: 0;
+          padding: 2rem 1.5rem;
+          border-right: none;
+        }
+        #welcome-panel {
+          height: 150px;
+          min-height: 150px;
+          background: linear-gradient(0deg, rgba(10, 14, 26, 0.9), rgba(74, 222, 128, 0.08));
+        }
         .panel {
-            width: 33.3333%; /* Each panel takes up one-third of the container */
-            flex-shrink: 0;
-            padding: 2rem 1.5rem;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            overflow-y: auto;
-            max-height: 100vh;
+          padding: 1.5rem;
         }
+      }
 
-        /* Hide the scrollbar for aesthetics on mobile-like layout */
-        .panel::-webkit-scrollbar {
-            display: none;
-        }
-        .panel {
-            -ms-overflow-style: none;  /* IE and Edge */
-            scrollbar-width: none;  /* Firefox */
-        }
-
-        /* Force Inter font loading */
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap');
+      @media (prefers-reduced-motion: reduce){
+        *{ animation: none !important; transition: none !important; }
+      }
     </style>
 </head>
-<body class="bg-safety-dark text-white font-sans min-h-screen flex items-center justify-center">
+<body class="font-sans text-white min-h-screen flex items-center justify-center px-4">
 
-    <!-- Main Mobile Frame Container -->
-    <div id="app" class="w-full max-w-sm h-[90vh] bg-slate-900 shadow-2xl rounded-3xl overflow-hidden relative">
+    <!-- Decorative floating accents -->
+    <div class="pointer-events-none fixed -top-16 -right-16 w-72 h-72 rounded-full blur-3xl opacity-20 bg-safety-green animate-float"></div>
+    <div class="pointer-events-none fixed -bottom-20 -left-20 w-72 h-72 rounded-full blur-3xl opacity-15 bg-red-900 animate-float"></div>
 
-        <!-- Screen Container for 3-Panel Slide Effect -->
-        <div id="screen-container">
+    <!-- App frame (max-w-3xl for desktop, fixed height) -->
+    <div id="app" class="w-full max-w-3xl h-[600px] gradient-frame shadow-glow">
+        <div class="glass relative h-full rounded-[22px] overflow-hidden">
 
-            <!-- 1. SPLASH / LOGO SCREEN -->
-            <div id="splash-screen" class="panel text-center">
-                <!-- Using the uploaded logo image -->
-                <img src="contents/image.png" alt="My Safety Project Logo"
-     class="w-24 h-24 mb-6 object-contain rounded-full shadow-lg shadow-safety-green/30">
+            <!-- header micro-accent -->
+            <div class="absolute inset-x-0 top-0 h-[2px] bg-gradient-to-r from-transparent via-safety-green/40 to-transparent z-10"></div>
 
+            <!-- Left Panel: Static Welcome/Marketing -->
+            <section id="welcome-panel" class="text-center">
+                <div class="flex flex-col items-center">
+                    <img
+                        src="9e148577-3b31-49c0-8d28-25cfc1f6eb9d.jpeg"
+                        alt="My Safety Project Logo"
+                        onerror="this.onerror=null;this.src='https://placehold.co/100x100/4ADE80/0A0E1A?text=MSL'"
+                        class="w-24 h-24 mb-6 object-cover rounded-3xl shadow-glow border-2 border-safety-green/30 animate-float"
+                    />
 
+                    <h1 class="text-4xl leading-snug font-extrabold tracking-tight text-safety-green mb-2">
+                        MY SAFETY <span class="block text-white/70 text-sm font-semibold">Premium Network</span>
+                    </h1>
 
+                    <p class="mt-4 text-gray-300/80 text-sm max-w-xs">
+                        **Welcome to the next generation of personal security.** Manage your secure routes, alert network, and community watch settings in one place.
+                    </p>
 
-                <h1 class="text-4xl font-extrabold text-safety-green mb-2">MY SAFETY</h1>
-                <p class="text-lg font-light text-gray-300">Smart Routes, Safer Cities</p>
-                <p class="text-sm text-gray-400 mt-2"></p>
-
-                <div class="mt-20 w-full">
-                    <p class="text-sm text-gray-400 mb-4">Tap to start your secure journey.</p>
-                    <button onclick="changeScreen('login')"
-                        class="w-full py-3 bg-safety-green text-safety-dark font-semibold rounded-xl shadow-lg hover:bg-green-300 transition duration-150 transform hover:scale-[1.02]">
-                        Get Started
-                    </button>
-                </div>
-            </div>
-
-            <!-- 2. LOGIN SCREEN -->
-            <div id="login-screen" class="panel">
-                <div class="w-full">
-                    <h2 class="text-3xl font-bold text-safety-green mb-2 text-left">Welcome Back</h2>
-                    <p class="text-md text-gray-400 mb-8 text-left">Sign in to report or check area safety.</p>
-
-                    <form onsubmit="handleLogin(event)" class="space-y-6">
-                        <!-- Email Input -->
-                        <div class="relative">
-                            <input type="email" id="login-email" required placeholder=" "
-                                class="w-full peer px-4 py-3 bg-slate-800 border border-slate-700 rounded-xl focus:ring-safety-green focus:border-safety-green outline-none transition text-white placeholder-transparent">
-                            <label for="login-email"
-                                class="absolute left-4 top-3.5 text-gray-500 text-sm transition-all duration-300 transform peer-placeholder-shown:text-base peer-placeholder-shown:text-gray-500 peer-placeholder-shown:top-3.5 peer-focus:top-1.5 peer-focus:text-safety-green peer-focus:text-xs">
-                                Enter Your Email
-                            </label>
+                    <div class="space-y-3 mt-8 text-left w-full max-w-xs">
+                        <div class="flex items-start gap-3 text-sm">
+                            <i data-lucide="shield-check" class="w-5 h-5 text-safety-green flex-shrink-0 mt-0.5"></i>
+                            <p class="text-gray-200">End-to-end Encrypted Messaging</p>
                         </div>
-
-                        <!-- Password Input -->
-                        <div class="relative">
-                            <input type="password" id="login-password" required placeholder=" "
-                                class="w-full peer px-4 py-3 bg-slate-800 border border-slate-700 rounded-xl focus:ring-safety-green focus:border-safety-green outline-none transition text-white placeholder-transparent">
-                            <label for="login-password"
-                                class="absolute left-4 top-3.5 text-gray-500 text-sm transition-all duration-300 transform peer-placeholder-shown:text-base peer-placeholder-shown:text-gray-500 peer-placeholder-shown:top-3.5 peer-focus:top-1.5 peer-focus:text-safety-green peer-focus:text-xs">
-                                Enter Your Password
-                            </label>
+                        <div class="flex items-start gap-3 text-sm">
+                            <i data-lucide="map-pin" class="w-5 h-5 text-safety-green flex-shrink-0 mt-0.5"></i>
+                            <p class="text-gray-200">Real-time Location Sharing</p>
                         </div>
-
-                        <div class="flex justify-between items-center text-sm">
-                            <div class="flex items-center">
-                                <input id="remember-me" type="checkbox"
-                                    class="h-4 w-4 text-safety-green bg-slate-800 border-slate-700 rounded focus:ring-safety-green">
-                                <label for="remember-me" class="ml-2 text-gray-400">Remember Me</label>
-                            </div>
-                            <a href="#" class="text-safety-green hover:text-green-300 transition duration-150">
-                                Forgot Password?
-                            </a>
+                        <div class="flex items-start gap-3 text-sm">
+                            <i data-lucide="bell-ring" class="w-5 h-5 text-safety-green flex-shrink-0 mt-0.5"></i>
+                            <p class="text-gray-200">One-Tap Emergency Alerts</p>
                         </div>
-
-                        <!-- Log In Button -->
-                        <button type="submit"
-                            class="w-full py-4 bg-safety-green text-safety-dark font-bold rounded-xl shadow-lg shadow-safety-green/50 hover:bg-green-300 transition duration-150 transform hover:scale-[1.02]">
-                            LOG IN
-                        </button>
-                    </form>
-
-                    <!-- OR Divider -->
-                    <div class="flex items-center my-6">
-                        <div class="flex-grow border-t border-slate-700"></div>
-                        <span class="mx-4 text-sm text-gray-500">Or New User?</span>
-                        <div class="flex-grow border-t border-slate-700"></div>
                     </div>
 
-                    <!-- Sign Up Link -->
-                    <button onclick="changeScreen('signup')"
-                        class="w-full py-3 border border-safety-green text-safety-green font-semibold rounded-xl hover:bg-safety-green/10 transition duration-150">
-                        Sign Up Now
-                    </button>
+                </div>
+            </section>
 
+            <!-- Right Panel: Sliding Form Wrapper -->
+            <div id="form-wrapper">
+                <div id="screen-container">
+
+                    <!-- 1) Login -->
+                    <section id="login-screen" class="panel">
+                        <div class="w-full">
+                            <!-- New Welcome Message -->
+                            <h2 class="text-4xl font-extrabold text-safety-green mb-2">Welcome Back!</h2>
+                            <p class="text-lg text-gray-300 font-medium mb-8">Ready to secure your world?</p>
+
+                            <form onsubmit="handleLogin(event)" class="space-y-6" novalidate>
+                                <!-- email -->
+                                <div class="input-group">
+                                    <i data-lucide="mail" class="input-icon w-5 h-5"></i>
+                                    <input type="email" id="login-email" required placeholder=" "
+                                        autocomplete="username"
+                                        class="peer w-full pl-12 pr-4 py-3 bg-slate-900/60 border border-white/10 rounded-xl outline-none focus:ring-2 focus:ring-safety-green/50 focus:border-safety-green/70 transition placeholder-transparent text-white"
+                                        aria-describedby="login-email-err" />
+                                    <label class="floating-label">Email Address</label>
+                                </div>
+                                <p id="login-email-err" class="hidden text-xs text-safety-red mt-1 font-medium">Please enter a valid email.</p>
+
+                                <!-- password -->
+                                <div class="input-group">
+                                    <i data-lucide="lock" class="input-icon w-5 h-5"></i>
+                                    <input type="password" id="login-password" required placeholder=" "
+                                        autocomplete="current-password"
+                                        class="peer w-full pl-12 pr-12 py-3 bg-slate-900/60 border border-white/10 rounded-xl outline-none focus:ring-2 focus:ring-safety-green/50 focus:border-safety-green/70 transition placeholder-transparent text-white"
+                                    />
+                                    <label class="floating-label">Password</label>
+                                    <button type="button" onclick="togglePasswordVisibility('login-password', this)"
+                                        class="absolute right-3 top-1/2 -translate-y-1/2 p-2 text-gray-400 hover:text-safety-green transition">
+                                        <i data-lucide="eye" class="w-5 h-5"></i>
+                                    </button>
+                                </div>
+
+                                <div class="flex items-center justify-between text-xs">
+                                    <label class="inline-flex items-center gap-2 select-none cursor-pointer">
+                                        <input type="checkbox" id="remember" class="accent-safety-green">
+                                        <span class="text-gray-300">Remember me</span>
+                                    </label>
+                                    <a href="#" class="text-safety-green hover:underline font-medium">Forgot Password?</a>
+                                </div>
+
+                                <button id="login-btn" type="submit" class="btn-primary w-full text-lg flex items-center justify-center gap-1">
+                                    <span>Log In Securely</span>
+                                    <span id="login-loading" class="hidden text-safety-dark">
+                                        <span class="dot"></span><span class="dot"></span><span class="dot"></span>
+                                    </span>
+                                </button>
+                            </form>
+
+                            <div class="flex items-center my-6">
+                                <div class="flex-grow border-t border-white/10"></div>
+                                <span class="mx-4 text-xs text-gray-500">Or continue with</span>
+                                <div class="flex-grow border-t border-white/10"></div>
+                            </div>
+
+                            <div class="flex gap-3">
+                                <button class="btn-ghost flex-1 text-sm">
+                                    <i data-lucide="square-gantt" class="inline-block w-4 h-4 mr-2"></i> Google
+                                </button>
+                                <button class="btn-ghost flex-1 text-sm">
+                                    <i data-lucide="apple" class="inline-block w-4 h-4 mr-2"></i> Apple
+                                </button>
+                            </div>
+
+                            <p class="text-center text-xs mt-6 text-gray-400">
+                                Don’t have an account?
+                                <button onclick="changeScreen('signup')" class="text-safety-green hover:underline font-semibold ml-1">Sign Up Now</button>
+                            </p>
+                        </div>
+                    </section>
+
+                    <!-- 2) Signup -->
+                    <section id="signup-screen" class="panel">
+                        <div class="w-full">
+                            <h2 class="text-4xl font-extrabold text-safety-green">Get Started</h2>
+                            <p class="text-sm text-gray-400 mt-1 mb-8">Join the safety network in minutes</p>
+
+                            <form onsubmit="handleSignup(event)" class="space-y-6" novalidate>
+                                <!-- name -->
+                                <div class="input-group">
+                                    <i data-lucide="user" class="input-icon w-5 h-5"></i>
+                                    <input type="text" id="signup-name" required placeholder=" "
+                                        autocomplete="name"
+                                        class="peer w-full pl-12 pr-4 py-3 bg-slate-900/60 border border-white/10 rounded-xl outline-none focus:ring-2 focus:ring-safety-green/50 focus:border-safety-green/70 transition placeholder-transparent text-white"/>
+                                    <label class="floating-label">Full Name</label>
+                                </div>
+
+                                <!-- email -->
+                                <div class="input-group">
+                                    <i data-lucide="mail" class="input-icon w-5 h-5"></i>
+                                    <input type="email" id="signup-email" required placeholder=" "
+                                        autocomplete="email"
+                                        class="peer w-full pl-12 pr-4 py-3 bg-slate-900/60 border border-white/10 rounded-xl outline-none focus:ring-2 focus:ring-safety-green/50 focus:border-safety-green/70 transition placeholder-transparent text-white"/>
+                                    <label class="floating-label">Email Address</label>
+                                </div>
+
+                                <!-- password -->
+                                <div class="space-y-2">
+                                    <div class="input-group">
+                                        <i data-lucide="lock" class="input-icon w-5 h-5"></i>
+                                        <input type="password" id="signup-password" required placeholder=" "
+                                            autocomplete="new-password"
+                                            class="peer w-full pl-12 pr-12 py-3 bg-slate-900/60 border border-white/10 rounded-xl outline-none focus:ring-2 focus:ring-safety-green/50 focus:border-safety-green/70 transition placeholder-transparent text-white"
+                                            oninput="evaluateStrength(this.value)"/>
+                                        <label class="floating-label">Create Password</label>
+                                        <button type="button" onclick="togglePasswordVisibility('signup-password', this)"
+                                            class="absolute right-3 top-1/2 -translate-y-1/2 p-2 text-gray-400 hover:text-safety-green transition">
+                                            <i data-lucide="eye" class="w-5 h-5"></i>
+                                        </button>
+                                    </div>
+                                    <div class="strength" aria-hidden="true"><span id="strength-bar"></span></div>
+                                    <p id="strength-text" class="text-[11px] text-gray-400">Use 8+ chars with letters, numbers & symbols.</p>
+                                </div>
+
+                                <!-- confirm -->
+                                <div class="input-group">
+                                    <i data-lucide="key" class="input-icon w-5 h-5"></i>
+                                    <input type="password" id="signup-confirm-password" required placeholder=" "
+                                        autocomplete="new-password"
+                                        class="peer w-full pl-12 pr-12 py-3 bg-slate-900/60 border border-white/10 rounded-xl outline-none focus:ring-2 focus:ring-safety-green/50 focus:border-safety-green/70 transition placeholder-transparent text-white"/>
+                                    <label class="floating-label">Confirm Password</label>
+                                    <button type="button" onclick="togglePasswordVisibility('signup-confirm-password', this)"
+                                        class="absolute right-3 top-1/2 -translate-y-1/2 p-2 text-gray-400 hover:text-safety-green transition">
+                                        <i data-lucide="eye" class="w-5 h-5"></i>
+                                    </button>
+                                </div>
+
+                                <div class="text-[11px] text-gray-400 -mt-2">
+                                    By creating an account, you agree to our
+                                    <a href="#" class="text-safety-green hover:underline">Terms</a> &amp;
+                                    <a href="#" class="text-safety-green hover:underline">Privacy Policy</a>.
+                                </div>
+
+                                <button id="signup-btn" type="submit" class="btn-primary w-full text-lg flex items-center justify-center gap-1 mt-2">
+                                    <span>Create Secure Account</span>
+                                    <span id="signup-loading" class="hidden text-safety-dark">
+                                        <span class="dot"></span><span class="dot"></span><span class="dot"></span>
+                                    </span>
+                                </button>
+                            </form>
+
+                            <p class="text-center text-xs mt-6 text-gray-400">
+                                Already a member?
+                                <button onclick="changeScreen('login')" class="text-safety-green hover:underline font-semibold ml-1">Log In</button>
+                            </p>
+                        </div>
+                    </section>
                 </div>
             </div>
 
-            <!-- 3. SIGN UP SCREEN -->
-            <div id="signup-screen" class="panel">
-                <div class="w-full">
-                    <h2 class="text-3xl font-bold text-safety-green mb-2 text-left">Create Account</h2>
-                    <p class="text-md text-gray-400 mb-8 text-left">Join My Safety to contribute to safer cities.</p>
-
-                    <form onsubmit="handleSignup(event)" class="space-y-6">
-                        <!-- Name Input -->
-                        <div class="relative">
-                            <input type="text" id="signup-name" required placeholder=" "
-                                class="w-full peer px-4 py-3 bg-slate-800 border border-slate-700 rounded-xl focus:ring-safety-green focus:border-safety-green outline-none transition text-white placeholder-transparent">
-                            <label for="signup-name"
-                                class="absolute left-4 top-3.5 text-gray-500 text-sm transition-all duration-300 transform peer-placeholder-shown:text-base peer-placeholder-shown:text-gray-500 peer-placeholder-shown:top-3.5 peer-focus:top-1.5 peer-focus:text-safety-green peer-focus:text-xs">
-                                Enter Your Full Name
-                            </label>
-                        </div>
-
-                        <!-- Email Input -->
-                        <div class="relative">
-                            <input type="email" id="signup-email" required placeholder=" "
-                                class="w-full peer px-4 py-3 bg-slate-800 border border-slate-700 rounded-xl focus:ring-safety-green focus:border-safety-green outline-none transition text-white placeholder-transparent">
-                            <label for="signup-email"
-                                class="absolute left-4 top-3.5 text-gray-500 text-sm transition-all duration-300 transform peer-placeholder-shown:text-base peer-placeholder-shown:text-gray-500 peer-placeholder-shown:top-3.5 peer-focus:top-1.5 peer-focus:text-safety-green peer-focus:text-xs">
-                                Enter Your Email
-                            </label>
-                        </div>
-
-                        <!-- Password Input -->
-                        <div class="relative">
-                            <input type="password" id="signup-password" required placeholder=" "
-                                class="w-full peer px-4 py-3 bg-slate-800 border border-slate-700 rounded-xl focus:ring-safety-green focus:border-safety-green outline-none transition text-white placeholder-transparent">
-                            <label for="signup-password"
-                                class="absolute left-4 top-3.5 text-gray-500 text-sm transition-all duration-300 transform peer-placeholder-shown:text-base peer-placeholder-shown:text-gray-500 peer-placeholder-shown:top-3.5 peer-focus:top-1.5 peer-focus:text-safety-green peer-focus:text-xs">
-                                Create Password
-                            </label>
-                        </div>
-
-                        <!-- Confirm Password Input (optional but good practice) -->
-                        <div class="relative">
-                            <input type="password" id="signup-confirm-password" required placeholder=" "
-                                class="w-full peer px-4 py-3 bg-slate-800 border border-slate-700 rounded-xl focus:ring-safety-green focus:border-safety-green outline-none transition text-white placeholder-transparent">
-                            <label for="signup-confirm-password"
-                                class="absolute left-4 top-3.5 text-gray-500 text-sm transition-all duration-300 transform peer-placeholder-shown:text-base peer-placeholder-shown:text-gray-500 peer-placeholder-shown:top-3.5 peer-focus:top-1.5 peer-focus:text-safety-green peer-focus:text-xs">
-                                Confirm Password
-                            </label>
-                        </div>
-
-                        <!-- Sign Up Button -->
-                        <button type="submit"
-                            class="w-full py-4 bg-safety-green text-safety-dark font-bold rounded-xl shadow-lg shadow-safety-green/50 hover:bg-green-300 transition duration-150 transform hover:scale-[1.02]">
-                            SIGN UP
-                        </button>
-                    </form>
-
-                    <!-- Already have an account? Link -->
-                    <p class="text-center text-sm mt-6 text-gray-400">
-                        Already have an account?
-                        <button onclick="changeScreen('login')" class="text-safety-green hover:underline font-semibold ml-1">
-                            Log In
-                        </button>
-                    </p>
-                </div>
+            <!-- custom alert -->
+            <div id="custom-alert" class="absolute top-0 left-0 right-0 p-3 text-center text-[13px] font-medium transition-all duration-300 hidden">
+                <!-- message injected here -->
             </div>
-
-        </div> <!-- End Screen Container -->
-
-        <!-- Custom Alert Box (Replaces alert()) -->
-        <div id="custom-alert" class="hidden absolute top-0 left-0 right-0 p-4 text-center text-sm font-medium bg-red-600 text-white transition-all duration-300">
-            <!-- Message goes here -->
         </div>
-
-    </div> <!-- End Main Container -->
+    </div>
 
     <script>
-        // State management for screen transitions
+        // Init icons once DOM is ready
+        document.addEventListener('DOMContentLoaded', () => {
+            lucide.createIcons();
+        });
+
         const screenContainer = document.getElementById('screen-container');
         const alertBox = document.getElementById('custom-alert');
 
-        /**
-         * Changes the visible screen using a CSS transform for the sliding effect.
-         * @param {('splash'|'login'|'signup')} screen - The name of the screen to transition to.
-         */
-        function changeScreen(screen) {
+        // Updated function for 2 screens
+        function changeScreen(screen){
             let translateValue = '0%';
-            if (screen === 'login') {
-                translateValue = '-33.3333%';
-            } else if (screen === 'signup') {
-                translateValue = '-66.6666%';
-            } else {
-                // 'splash' or default
-                translateValue = '0%';
-            }
+            if (screen === 'signup') translateValue = '-50%';
+            // If already on the requested screen, do nothing
+            if (screen === 'login' && translateValue === screenContainer.style.transform) return;
+            if (screen === 'signup' && translateValue === screenContainer.style.transform) return;
+
             screenContainer.style.transform = `translateX(${translateValue})`;
         }
 
-        /**
-         * Custom alert function to show non-blocking messages (replaces alert()).
-         */
-        function showAlert(message, isError = true) {
+        function togglePasswordVisibility(inputId, btn){
+            const input = document.getElementById(inputId);
+            const icon = btn.querySelector('i');
+            if (input.type === 'password'){
+                input.type = 'text';
+                icon.setAttribute('data-lucide', 'eye-off');
+            } else {
+                input.type = 'password';
+                icon.setAttribute('data-lucide', 'eye');
+            }
+            lucide.createIcons(); // refresh
+        }
+
+        function showAlert(message, isError = true){
             alertBox.textContent = message;
-            alertBox.className = `absolute top-0 left-0 right-0 p-4 text-center text-sm font-medium transition-all duration-300 z-10 ${isError ? 'bg-red-600' : 'bg-safety-green text-safety-dark'}`;
+            alertBox.className =
+                `absolute top-0 left-0 right-0 p-3 text-center text-[13px] font-medium transition-all duration-300 z-10 ${isError ? 'bg-safety-red/90 text-white' : 'bg-safety-green text-safety-dark'} show`;
             alertBox.classList.remove('hidden');
-
+            // Animate in
+            requestAnimationFrame(() => alertBox.classList.add('show'));
+            // Auto-hide
             setTimeout(() => {
-                alertBox.classList.add('hidden');
-            }, 3000); // Hide after 3 seconds
+                alertBox.classList.remove('show');
+                setTimeout(() => alertBox.classList.add('hidden'), 250);
+            }, 2800);
         }
 
-        /**
-         * Handles the login form submission.
-         */
-        function handleLogin(event) {
-            event.preventDefault();
-            const email = document.getElementById('login-email').value;
-            const password = document.getElementById('login-password').value;
-
-            // In a real project, you would connect to your DBMS/backend here
-            console.log('Attempting Login:', { email, password });
-
-            // Placeholder logic: Successful login demonstration
-            showAlert(`Login successful for ${email}! Welcome to My Safety.`, false);
+        function isValidEmail(email){
+            return /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email);
         }
 
-        /**
-         * Handles the sign-up form submission.
-         */
-        function handleSignup(event) {
-            event.preventDefault();
-            const name = document.getElementById('signup-name').value;
-            const email = document.getElementById('signup-email').value;
-            const password = document.getElementById('signup-password').value;
-            const confirmPassword = document.getElementById('signup-confirm-password').value;
+        // Password strength
+        const strengthBar = document.getElementById('strength-bar');
+        const strengthText = document.getElementById('strength-text');
+        function evaluateStrength(pw){
+            let score = 0;
+            if (pw.length >= 8) score++;
+            if (/[A-Z]/.test(pw)) score++;
+            if (/[a-z]/.test(pw)) score++;
+            if (/\d/.test(pw)) score++;
+            if (/[\W_]/.test(pw)) score++;
 
-            if (password !== confirmPassword) {
-                showAlert("Error: Passwords do not match. Please try again.");
+            const pct = Math.min(100, score * 20);
+            strengthBar.style.width = pct + '%';
+
+            if (score <= 2){
+                strengthText.textContent = 'Weak password — add more characters & mix cases, numbers, symbols.';
+                strengthText.className = 'text-[11px] text-safety-red';
+            } else if (score === 3){
+                strengthText.textContent = 'Medium — consider adding symbols and more length.';
+                strengthText.className = 'text-[11px] text-amber-300';
+            } else {
+                strengthText.textContent = 'Strong — good to go!';
+                strengthText.className = 'text-[11px] text-safety-green';
+            }
+        }
+
+        // LOGIN
+        function handleLogin(e){
+            e.preventDefault();
+            const email = document.getElementById('login-email');
+            const pwd = document.getElementById('login-password');
+            const btn = document.getElementById('login-btn');
+            const dots = document.getElementById('login-loading');
+            const emailErr = document.getElementById('login-email-err');
+
+            emailErr.classList.add('hidden');
+            if (!isValidEmail(email.value.trim())){
+                emailErr.classList.remove('hidden');
+                showAlert('Please provide a valid email.', true);
+                return;
+            }
+            if (!pwd.value){
+                showAlert('Password cannot be empty.', true);
                 return;
             }
 
-            // In a real project, you would register the new user here
-            console.log('Attempting Signup:', { name, email, password });
+            btn.setAttribute('disabled', 'disabled');
+            dots.classList.remove('hidden');
 
-            // Placeholder logic: Successful sign-up demonstration
-            showAlert(`Account created for ${name}! Please log in.`, false);
-            // Optionally move to the login screen after successful sign up
-            setTimeout(() => changeScreen('login'), 1500);
+            // Fake processing demo
+            setTimeout(() => {
+                dots.classList.add('hidden');
+                btn.removeAttribute('disabled');
+                showAlert(`Login successful for ${email.value.trim()} — redirecting…`, false);
+                // TODO: fetch('/api/login', {method:'POST', ...})
+            }, 1200);
         }
 
-        // Initialize the app to the splash screen
+        // SIGNUP
+        function handleSignup(e){
+            e.preventDefault();
+            const name = document.getElementById('signup-name').value.trim();
+            const email = document.getElementById('signup-email').value.trim();
+            const pw = document.getElementById('signup-password').value;
+            const cpw = document.getElementById('signup-confirm-password').value;
+            const btn = document.getElementById('signup-btn');
+            const dots = document.getElementById('signup-loading');
+
+            if (!name || name.length < 2){
+                showAlert('Please enter your full name.', true);
+                return;
+            }
+            if (!isValidEmail(email)){
+                showAlert('Please enter a valid email address.', true);
+                return;
+            }
+            if (pw.length < 8){
+                showAlert('Password must be at least 8 characters long.', true);
+                return;
+            }
+            if (pw !== cpw){
+                showAlert('Passwords do not match.', true);
+                return;
+            }
+
+            btn.setAttribute('disabled', 'disabled');
+            dots.classList.remove('hidden');
+
+            // Fake processing demo
+            setTimeout(() => {
+                dots.classList.add('hidden');
+                btn.removeAttribute('disabled');
+                showAlert(`Account created for ${name}. Please verify your email.`, false);
+                // After successful signup, switch back to login screen
+                setTimeout(() => changeScreen('login'), 900);
+                // TODO: fetch('/api/register', {method:'POST', ...})
+            }, 1400);
+        }
+
+        // Start on login screen
         window.onload = () => {
-             // You can uncomment the line below to skip the splash screen if preferred
-             // changeScreen('login');
+            changeScreen('login');
         };
     </script>
 </body>

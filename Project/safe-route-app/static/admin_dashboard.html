@@ -265,18 +265,6 @@
       background: var(--accent-blue);
       color: white;
     }
-    .status-reported {
-      background: var(--accent-gray);
-      color: white;
-    }
-    .status-under-investigation {
-      background: var(--accent-purple);
-      color: white;
-    }
-    .status-case-closed {
-      background: var(--accent-green);
-      color: white;
-    }
     .action-btn {
       background: transparent;
       color: var(--text-secondary);
@@ -384,11 +372,11 @@
       <div class="logo-text">My Safety</div>
     </div>
     <div class="nav-links">
-      <a href="/static/index.html">Report Crime</a>
-      <a href="/static/login.html">Report Status</a>
-      <a href="/admin">Admin Dashboard</a>
+      <a href="#">Report Crime</a>
+      <a href="#">Report Status</a>
+      <a href="#">Admin Dashboard</a>
     </div>
-    <a href="/static/login.html" class="login-btn">
+    <a href="#" class="login-btn">
       <span>→</span>
       Login
     </a>
@@ -421,8 +409,40 @@
               <th>Actions</th>
             </tr>
           </thead>
-          <tbody id="crimes-table">
-            <!-- Data will be loaded dynamically -->
+          <tbody>
+            <tr>
+              <td>CR-BD-001</td>
+              <td>Road 1, Block A, Mirpur</td>
+              <td><span class="status-badge status-in-progress">In Progress</span></td>
+              <td>
+                <button class="action-btn">
+                  <span>📄</span>
+                  Summarize
+                </button>
+              </td>
+            </tr>
+            <tr>
+              <td>CR-BD-002</td>
+              <td>House 5, Road 2, Dhanmondi</td>
+              <td><span class="status-badge status-resolved">Resolved</span></td>
+              <td>
+                <button class="action-btn">
+                  <span>📄</span>
+                  Summarize
+                </button>
+              </td>
+            </tr>
+            <tr>
+              <td>CR-BD-003</td>
+              <td>Near Gulshan 2 Circle</td>
+              <td><span class="status-badge status-pending">Pending</span></td>
+              <td>
+                <button class="action-btn">
+                  <span>📄</span>
+                  Summarize
+                </button>
+              </td>
+            </tr>
           </tbody>
         </table>
       </div>
@@ -677,8 +697,66 @@
               <th>Actions</th>
             </tr>
           </thead>
-          <tbody id="complaints-table">
-            <!-- Data will be loaded dynamically -->
+          <tbody>
+            <tr>
+              <td>COMP-001</td>
+              <td>john.doe@email.com</td>
+              <td>2025-01-15 14:30</td>
+              <td>Web Portal</td>
+              <td><span class="status-badge status-pending">Pending</span></td>
+              <td>
+                <button class="btn btn-success" onclick="verifyComplaint('COMP-001')">
+                  <span>✓</span>
+                  Verify
+                </button>
+                <button class="btn btn-danger" onclick="rejectComplaint('COMP-001')">
+                  <span>✗</span>
+                  Reject
+                </button>
+                <button class="action-btn" onclick="viewComplaintDetails('COMP-001')">
+                  <span>👁️</span>
+                  View Details
+                </button>
+              </td>
+            </tr>
+            <tr>
+              <td>COMP-002</td>
+              <td>+880123456789</td>
+              <td>2025-01-14 16:45</td>
+              <td>Phone</td>
+              <td><span class="status-badge status-verified">Verified</span></td>
+              <td>
+                <button class="btn btn-primary" onclick="escalateToCrime('COMP-002')">
+                  <span>📋</span>
+                  Escalate to Crime
+                </button>
+                <button class="action-btn" onclick="viewComplaintDetails('COMP-002')">
+                  <span>👁️</span>
+                  View Details
+                </button>
+              </td>
+            </tr>
+            <tr>
+              <td>COMP-003</td>
+              <td>jane.smith@email.com</td>
+              <td>2025-01-13 09:15</td>
+              <td>Mobile App</td>
+              <td><span class="status-badge status-pending">Pending</span></td>
+              <td>
+                <button class="btn btn-success" onclick="verifyComplaint('COMP-003')">
+                  <span>✓</span>
+                  Verify
+                </button>
+                <button class="btn btn-danger" onclick="rejectComplaint('COMP-003')">
+                  <span>✗</span>
+                  Reject
+                </button>
+                <button class="action-btn" onclick="viewComplaintDetails('COMP-003')">
+                  <span>👁️</span>
+                  View Details
+                </button>
+              </td>
+            </tr>
           </tbody>
         </table>
       </div>
@@ -702,8 +780,57 @@
               <th>Actions</th>
             </tr>
           </thead>
-          <tbody id="assignments-table">
-            <!-- Data will be loaded dynamically -->
+          <tbody>
+            <tr>
+              <td>ASSIGN-001</td>
+              <td>CRIME-001</td>
+              <td>Officer Ahmed</td>
+              <td>Lead Investigator</td>
+              <td>2025-01-15 10:00</td>
+              <td><span class="status-badge status-in-progress">In Progress</span></td>
+              <td>
+                <button class="btn btn-primary" onclick="updateCaseStatus('ASSIGN-001')">
+                  <span>📝</span>
+                  Update Status
+                </button>
+                <button class="btn btn-secondary" onclick="viewStatusHistory('CRIME-001')">
+                  <span>📊</span>
+                  View History
+                </button>
+              </td>
+            </tr>
+            <tr>
+              <td>ASSIGN-002</td>
+              <td>CRIME-002</td>
+              <td>Officer Rahman</td>
+              <td>Field Officer</td>
+              <td>2025-01-14 14:30</td>
+              <td><span class="status-badge status-resolved">Resolved</span></td>
+              <td>
+                <button class="action-btn" onclick="viewCaseDetails('ASSIGN-002')">
+                  <span>👁️</span>
+                  View Details
+                </button>
+                <button class="btn btn-secondary" onclick="viewStatusHistory('CRIME-002')">
+                  <span>📊</span>
+                  View History
+                </button>
+              </td>
+            </tr>
+            <tr>
+              <td>ASSIGN-003</td>
+              <td>CRIME-003</td>
+              <td>Unassigned</td>
+              <td>-</td>
+              <td>-</td>
+              <td><span class="status-badge status-pending">Pending</span></td>
+              <td>
+                <button class="btn btn-success" onclick="assignCase('CRIME-003')">
+                  <span>👤</span>
+                  Assign Officer
+                </button>
+              </td>
+            </tr>
           </tbody>
         </table>
       </div>
@@ -790,15 +917,6 @@
       
       // Add active class to clicked button
       event.target.classList.add('active');
-      
-      // Load data for specific tabs
-      if (tabName === 'overview') {
-        loadCrimesOverview();
-      } else if (tabName === 'verify-reports') {
-        loadComplaints();
-      } else if (tabName === 'case-management') {
-        loadCaseAssignments();
-      }
     }
 
     // Add crime form submission
@@ -866,7 +984,7 @@
         submitBtn.innerHTML = '<span>⏳</span> Adding Crime...';
         submitBtn.disabled = true;
         
-        // Send data to FastAPI backend
+        // Send data to backend
         const response = await fetch('/api/crimes', {
           method: 'POST',
           headers: {
@@ -886,7 +1004,7 @@
             loadCrimesOverview();
           }
         } else {
-          alert(`Error adding crime: ${result.detail || 'Unknown error'}`);
+          alert(`Error adding crime: ${result.error}`);
         }
         
       } catch (error) {
@@ -899,6 +1017,138 @@
       }
     });
 
+    // Complaint verification functions
+    function verifyComplaint(complaintId) {
+      if (confirm(`Are you sure you want to verify complaint ${complaintId}?`)) {
+        // Update COMPLAINT status in database
+        console.log(`Verifying complaint: ${complaintId}`);
+        alert(`Complaint ${complaintId} has been verified!`);
+        // Refresh the table or update the UI
+      }
+    }
+
+    function rejectComplaint(complaintId) {
+      if (confirm(`Are you sure you want to reject complaint ${complaintId}?`)) {
+        // Update COMPLAINT status in database
+        console.log(`Rejecting complaint: ${complaintId}`);
+        alert(`Complaint ${complaintId} has been rejected!`);
+        // Refresh the table or update the UI
+      }
+    }
+
+    function escalateToCrime(complaintId) {
+      if (confirm(`Are you sure you want to escalate complaint ${complaintId} to a crime report?`)) {
+        // Create new CRIME record from COMPLAINT
+        console.log(`Escalating complaint ${complaintId} to crime report`);
+        alert(`Complaint ${complaintId} has been escalated to a crime report!`);
+        // This would create a new CRIME record and link it to the COMPLAINT
+      }
+    }
+
+    function viewComplaintDetails(complaintId) {
+      // Show complaint details modal or navigate to details page
+      console.log(`Viewing details for complaint: ${complaintId}`);
+      alert(`Loading details for complaint ${complaintId}...`);
+    }
+
+    // Case management functions
+    function updateCaseStatus(assignmentId) {
+      const newStatus = prompt(`Enter new status for assignment ${assignmentId}:`, 'Under Investigation');
+      const notes = prompt(`Enter notes for this status change:`, '');
+      
+      if (newStatus && notes) {
+        // Update CRIME status and add to CASE_STATUS_HISTORY
+        const statusData = {
+          assignment_id: assignmentId,
+          new_status: newStatus,
+          notes: notes,
+          changed_at: new Date().toISOString(),
+          changed_by: 'current_admin_user_id' // This would be the logged-in admin's ID
+        };
+        
+        console.log(`Updating case status:`, statusData);
+        alert(`Case ${assignmentId} status updated to: ${newStatus}`);
+      }
+    }
+
+    function assignCase(crimeId) {
+      const officerId = prompt(`Enter officer ID to assign case ${crimeId}:`, '');
+      const dutyRole = prompt(`Enter duty role:`, 'Field Officer');
+      
+      if (officerId && dutyRole) {
+        // Create new CASE_ASSIGNMENT record
+        const assignmentData = {
+          crime_id: crimeId,
+          user_id: officerId,
+          duty_role: dutyRole,
+          assigned_at: new Date().toISOString()
+        };
+        
+        console.log(`Assigning case:`, assignmentData);
+        alert(`Case ${crimeId} assigned to officer ${officerId} as ${dutyRole}`);
+      }
+    }
+
+    function viewStatusHistory(crimeId) {
+      // Show CASE_STATUS_HISTORY for the crime
+      console.log(`Viewing status history for crime: ${crimeId}`);
+      alert(`Loading status history for crime ${crimeId}...`);
+    }
+
+    function viewCaseDetails(assignmentId) {
+      // Show detailed case information
+      console.log(`Viewing case details for assignment: ${assignmentId}`);
+      alert(`Loading case details for assignment ${assignmentId}...`);
+    }
+
+    // Chat functionality
+    function selectUser(userId) {
+      // Remove active class from all users
+      const users = document.querySelectorAll('.chat-user');
+      users.forEach(user => user.classList.remove('active'));
+      
+      // Add active class to selected user
+      event.target.closest('.chat-user').classList.add('active');
+      
+      // Update chat header and messages
+      console.log(`Selected user: ${userId}`);
+      // Here you would load the conversation history for the selected user
+    }
+
+    function sendMessage() {
+      const input = document.getElementById('chat-input');
+      const message = input.value.trim();
+      
+      if (message) {
+        // Add message to chat
+        const messagesContainer = document.getElementById('chat-messages');
+        const messageElement = document.createElement('div');
+        messageElement.className = 'message admin';
+        messageElement.innerHTML = `
+          <div style="font-weight: 500; margin-bottom: 0.25rem;">Admin</div>
+          <div>${message}</div>
+          <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.25rem;">Just now</div>
+        `;
+        messagesContainer.appendChild(messageElement);
+        
+        // Clear input
+        input.value = '';
+        
+        // Scroll to bottom
+        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        
+        // Here you would send the message to your backend
+        console.log('Sending message:', message);
+      }
+    }
+
+    // Allow sending message with Enter key
+    document.getElementById('chat-input').addEventListener('keypress', function(e) {
+      if (e.key === 'Enter') {
+        sendMessage();
+      }
+    });
+
     // Load crimes for overview tab
     async function loadCrimesOverview() {
       try {
@@ -906,7 +1156,7 @@
         const result = await response.json();
         
         if (result.success) {
-          const tbody = document.getElementById('crimes-table');
+          const tbody = document.querySelector('#overview table tbody');
           tbody.innerHTML = ''; // Clear existing rows
           
           result.crimes.forEach(crime => {
@@ -937,7 +1187,7 @@
         const result = await response.json();
         
         if (result.success) {
-          const tbody = document.getElementById('complaints-table');
+          const tbody = document.querySelector('#verify-reports table tbody');
           tbody.innerHTML = ''; // Clear existing rows
           
           result.complaints.forEach(complaint => {
@@ -981,171 +1231,10 @@
       }
     }
 
-    // Load case assignments
-    async function loadCaseAssignments() {
-      try {
-        const response = await fetch('/api/case-assignments');
-        const result = await response.json();
-        
-        if (result.success) {
-          const tbody = document.getElementById('assignments-table');
-          tbody.innerHTML = ''; // Clear existing rows
-          
-          result.assignments.forEach(assignment => {
-            const row = document.createElement('tr');
-            row.innerHTML = `
-              <td>ASSIGN-${assignment.assignment_id.toString().padStart(3, '0')}</td>
-              <td>CRIME-${assignment.crime_id.toString().padStart(3, '0')}</td>
-              <td>${assignment.full_name || assignment.username || 'Unassigned'}</td>
-              <td>${assignment.duty_role}</td>
-              <td>${new Date(assignment.assigned_at).toLocaleString()}</td>
-              <td><span class="status-badge status-${assignment.status.replace('_', '-')}">${assignment.status.replace('_', ' ')}</span></td>
-              <td>
-                <button class="btn btn-primary" onclick="updateCaseStatus(${assignment.assignment_id})">
-                  <span>📝</span>
-                  Update Status
-                </button>
-                <button class="btn btn-secondary" onclick="viewStatusHistory(${assignment.crime_id})">
-                  <span>📊</span>
-                  View History
-                </button>
-              </td>
-            `;
-            tbody.appendChild(row);
-          });
-        }
-      } catch (error) {
-        console.error('Error loading case assignments:', error);
-      }
-    }
-
-    // Complaint verification functions
-    async function verifyComplaint(complaintId) {
-      if (confirm(`Are you sure you want to verify complaint ${complaintId}?`)) {
-        try {
-          const response = await fetch(`/api/complaints/${complaintId}/verify`, {
-            method: 'POST'
-          });
-          const result = await response.json();
-          
-          if (result.success) {
-            alert(`Complaint ${complaintId} has been verified!`);
-            loadComplaints(); // Refresh the table
-          } else {
-            alert(`Error: ${result.detail || 'Unknown error'}`);
-          }
-        } catch (error) {
-          console.error('Error:', error);
-          alert(`Error verifying complaint: ${error.message}`);
-        }
-      }
-    }
-
-    async function rejectComplaint(complaintId) {
-      if (confirm(`Are you sure you want to reject complaint ${complaintId}?`)) {
-        try {
-          const response = await fetch(`/api/complaints/${complaintId}/reject`, {
-            method: 'POST'
-          });
-          const result = await response.json();
-          
-          if (result.success) {
-            alert(`Complaint ${complaintId} has been rejected!`);
-            loadComplaints(); // Refresh the table
-          } else {
-            alert(`Error: ${result.detail || 'Unknown error'}`);
-          }
-        } catch (error) {
-          console.error('Error:', error);
-          alert(`Error rejecting complaint: ${error.message}`);
-        }
-      }
-    }
-
-    function escalateToCrime(complaintId) {
-      if (confirm(`Are you sure you want to escalate complaint ${complaintId} to a crime report?`)) {
-        console.log(`Escalating complaint ${complaintId} to crime report`);
-        alert(`Complaint ${complaintId} has been escalated to a crime report!`);
-      }
-    }
-
-    function viewComplaintDetails(complaintId) {
-      console.log(`Viewing details for complaint: ${complaintId}`);
-      alert(`Loading details for complaint ${complaintId}...`);
-    }
-
-    // Case management functions
-    function updateCaseStatus(assignmentId) {
-      const newStatus = prompt(`Enter new status for assignment ${assignmentId}:`, 'Under Investigation');
-      const notes = prompt(`Enter notes for this status change:`, '');
-      
-      if (newStatus && notes) {
-        console.log(`Updating case status: ${assignmentId} to ${newStatus}`);
-        alert(`Case ${assignmentId} status updated to: ${newStatus}`);
-      }
-    }
-
-    function viewStatusHistory(crimeId) {
-      console.log(`Viewing status history for crime: ${crimeId}`);
-      alert(`Loading status history for crime ${crimeId}...`);
-    }
-
-    function viewCrimeDetails(crimeId) {
-      console.log(`Viewing crime details: ${crimeId}`);
-      alert(`Loading crime details for ${crimeId}...`);
-    }
-
-    // Chat functionality
-    function selectUser(userId) {
-      // Remove active class from all users
-      const users = document.querySelectorAll('.chat-user');
-      users.forEach(user => user.classList.remove('active'));
-      
-      // Add active class to selected user
-      event.target.closest('.chat-user').classList.add('active');
-      
-      // Update chat header and messages
-      console.log(`Selected user: ${userId}`);
-    }
-
-    function sendMessage() {
-      const input = document.getElementById('chat-input');
-      const message = input.value.trim();
-      
-      if (message) {
-        // Add message to chat
-        const messagesContainer = document.getElementById('chat-messages');
-        const messageElement = document.createElement('div');
-        messageElement.className = 'message admin';
-        messageElement.innerHTML = `
-          <div style="font-weight: 500; margin-bottom: 0.25rem;">Admin</div>
-          <div>${message}</div>
-          <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.25rem;">Just now</div>
-        `;
-        messagesContainer.appendChild(messageElement);
-        
-        // Clear input
-        input.value = '';
-        
-        // Scroll to bottom
-        messagesContainer.scrollTop = messagesContainer.scrollHeight;
-        
-        console.log('Sending message:', message);
-      }
-    }
-
-    // Allow sending message with Enter key
-    document.getElementById('chat-input').addEventListener('keypress', function(e) {
-      if (e.key === 'Enter') {
-        sendMessage();
-      }
-    });
-
     // Load data when page loads
     document.addEventListener('DOMContentLoaded', function() {
       loadCrimesOverview();
       loadComplaints();
-      loadCaseAssignments();
     });
   </script>
 </body>

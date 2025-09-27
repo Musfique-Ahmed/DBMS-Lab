@@ -875,7 +875,33 @@
           body: JSON.stringify(processedData)
         });
         
-        const result = await response.json();
+        console.log('Response status:', response.status);
+        console.log('Response headers:', response.headers);
+        
+        // Check if response is ok
+        if (!response.ok) {
+          const errorText = await response.text();
+          console.error('Error response:', errorText);
+          throw new Error(`HTTP ${response.status}: ${errorText}`);
+        }
+        
+        // Try to parse JSON
+        let result;
+        try {
+          const responseText = await response.text();
+          console.log('Response text:', responseText);
+          
+          if (!responseText.trim()) {
+            throw new Error('Empty response from server');
+          }
+          
+          result = JSON.parse(responseText);
+        } catch (parseError) {
+          console.error('JSON parse error:', parseError);
+          throw new Error(`Failed to parse server response: ${parseError.message}`);
+        }
+        
+        console.log('Parsed result:', result);
         
         if (result.success) {
           alert(`Crime added successfully!\nCrime ID: ${result.data.crime_id}`);
@@ -886,7 +912,7 @@
             loadCrimesOverview();
           }
         } else {
-          alert(`Error adding crime: ${result.detail || 'Unknown error'}`);
+          alert(`Error adding crime: ${result.error || result.message || 'Unknown error'}`);
         }
         
       } catch (error) {

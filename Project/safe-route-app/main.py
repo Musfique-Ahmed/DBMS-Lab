@@ -133,12 +133,15 @@ async def admin_dashboard():
 async def create_crime(crime_data: CrimeData):
     """Create a new crime with all related information using hardcoded SQL"""
     try:
+        print(f"Received crime data: {crime_data}")
+        
         with engine.connect() as conn:
             # Start transaction
             trans = conn.begin()
             
             try:
                 # Step 1: Insert Location
+                print("Inserting location...")
                 location_result = conn.execute(
                     text("""
                         INSERT INTO location (district_id, area_name, city, latitude, longitude, created_at)
@@ -154,8 +157,10 @@ async def create_crime(crime_data: CrimeData):
                     }
                 )
                 location_id = location_result.lastrowid
+                print(f"Location inserted with ID: {location_id}")
                 
                 # Step 2: Insert Crime
+                print("Inserting crime...")
                 crime_result = conn.execute(
                     text("""
                         INSERT INTO crime (crime_type, description, date_time, location_id, status, created_at)
@@ -171,10 +176,12 @@ async def create_crime(crime_data: CrimeData):
                     }
                 )
                 crime_id = crime_result.lastrowid
+                print(f"Crime inserted with ID: {crime_id}")
                 
                 # Step 3: Insert Victim (if provided)
                 victim_id = None
                 if crime_data.victim and crime_data.victim.get("full_name"):
+                    print("Inserting victim...")
                     victim_result = conn.execute(
                         text("""
                             INSERT INTO victim (full_name, dob, gender, address, phone_number, email, injury_details, created_at)
@@ -192,6 +199,7 @@ async def create_crime(crime_data: CrimeData):
                         }
                     )
                     victim_id = victim_result.lastrowid
+                    print(f"Victim inserted with ID: {victim_id}")
                     
                     # Insert Crime-Victim relationship
                     conn.execute(
@@ -209,6 +217,7 @@ async def create_crime(crime_data: CrimeData):
                 # Step 4: Insert Criminal (if provided)
                 criminal_id = None
                 if crime_data.criminal and crime_data.criminal.get("full_name"):
+                    print("Inserting criminal...")
                     criminal_result = conn.execute(
                         text("""
                             INSERT INTO criminal (full_name, alias_name, dob, gender, address, marital_status, previous_crimes, created_at)
@@ -226,6 +235,7 @@ async def create_crime(crime_data: CrimeData):
                         }
                     )
                     criminal_id = criminal_result.lastrowid
+                    print(f"Criminal inserted with ID: {criminal_id}")
                     
                     # Insert Crime-Criminal relationship
                     conn.execute(
@@ -243,6 +253,7 @@ async def create_crime(crime_data: CrimeData):
                 # Step 5: Insert Weapon (if provided)
                 weapon_id = None
                 if crime_data.weapon and crime_data.weapon.get("weapon_name"):
+                    print("Inserting weapon...")
                     weapon_result = conn.execute(
                         text("""
                             INSERT INTO weapon (weapon_name, weapon_type, description, serial_number, created_at)
@@ -257,6 +268,7 @@ async def create_crime(crime_data: CrimeData):
                         }
                     )
                     weapon_id = weapon_result.lastrowid
+                    print(f"Weapon inserted with ID: {weapon_id}")
                     
                     # Insert Crime-Weapon relationship
                     conn.execute(
@@ -274,6 +286,7 @@ async def create_crime(crime_data: CrimeData):
                 # Step 6: Insert Witness (if provided)
                 witness_id = None
                 if crime_data.witness and crime_data.witness.get("full_name"):
+                    print("Inserting witness...")
                     witness_result = conn.execute(
                         text("""
                             INSERT INTO witness (full_name, phone_number, protection_flag)
@@ -286,6 +299,7 @@ async def create_crime(crime_data: CrimeData):
                         }
                     )
                     witness_id = witness_result.lastrowid
+                    print(f"Witness inserted with ID: {witness_id}")
                     
                     # Insert Crime-Witness relationship
                     conn.execute(
@@ -302,6 +316,7 @@ async def create_crime(crime_data: CrimeData):
                 
                 # Commit transaction
                 trans.commit()
+                print("Transaction committed successfully")
                 
                 return {
                     "success": True,
@@ -317,11 +332,17 @@ async def create_crime(crime_data: CrimeData):
                 }
                 
             except Exception as e:
+                print(f"Error in transaction: {str(e)}")
                 trans.rollback()
                 raise e
                 
     except Exception as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        print(f"Error creating crime: {str(e)}")
+        return {
+            "success": False,
+            "error": str(e),
+            "message": "Failed to create crime"
+        }
 
 @app.get("/api/crimes")
 async def get_crimes():
@@ -592,6 +613,16 @@ async def get_users():
             
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/test-db")
+async def test_database():
+    """Test database connection"""
+    try:
+        with engine.connect() as conn:
+            result = conn.execute(text("SELECT 1 as test")).fetchone()
+            return {"success": True, "message": "Database connection successful", "test": result[0]}
+    except Exception as e:
+        return {"success": False, "error": str(e), "message": "Database connection failed"}
 
 @app.get("/")
 def read_root():

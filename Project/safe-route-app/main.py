@@ -56,6 +56,7 @@ async def register_user(user: UserCreate):
                 "created_at": datetime.utcnow()
             }
         )
+        print(f"Registered new user: {user.email}")
     return {"message": "User registered successfully"}
 
 @app.post("/login")
@@ -81,6 +82,7 @@ async def login_user(user: UserLogin):
                 "created_at": result["created_at"]
             }
         }
+        print(f"Login success for {user.email}")
 
 @app.get("/")
 def read_root():

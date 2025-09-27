@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Crime Endpoint</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .form-group { margin: 10px 0; }
+        label { display: block; margin-bottom: 5px; }
+        input, select, textarea { width: 300px; padding: 5px; }
+        button { padding: 10px 20px; background: #007bff; color: white; border: none; cursor: pointer; }
+        button:hover { background: #0056b3; }
+        .result { margin: 20px 0; padding: 10px; border: 1px solid #ccc; }
+        .error { background: #f8d7da; border-color: #f5c6cb; color: #721c24; }
+        .success { background: #d4edda; border-color: #c3e6cb; color: #155724; }
+    </style>
+</head>
+<body>
+    <h1>Test Crime Endpoint</h1>
+    
+    <div class="form-group">
+        <label>District ID:</label>
+        <input type="number" id="district_id" value="1">
+    </div>
+    
+    <div class="form-group">
+        <label>Area Name:</label>
+        <input type="text" id="area_name" value="Dhanmondi">
+    </div>
+    
+    <div class="form-group">
+        <label>City:</label>
+        <input type="text" id="city" value="Dhaka">
+    </div>
+    
+    <div class="form-group">
+        <label>Latitude:</label>
+        <input type="number" step="any" id="latitude" value="23.7465">
+    </div>
+    
+    <div class="form-group">
+        <label>Longitude:</label>
+        <input type="number" step="any" id="longitude" value="90.3760">
+    </div>
+    
+    <div class="form-group">
+        <label>Crime Type:</label>
+        <select id="crime_type">
+            <option value="theft">Theft</option>
+            <option value="robbery">Robbery</option>
+            <option value="assault">Assault</option>
+        </select>
+    </div>
+    
+    <div class="form-group">
+        <label>Description:</label>
+        <textarea id="description">Test crime for debugging</textarea>
+    </div>
+    
+    <div class="form-group">
+        <label>Date & Time:</label>
+        <input type="datetime-local" id="date_time" value="2025-01-15T14:30">
+    </div>
+    
+    <div class="form-group">
+        <label>Status:</label>
+        <select id="status">
+            <option value="reported">Reported</option>
+            <option value="under_investigation">Under Investigation</option>
+            <option value="case_closed">Case Closed</option>
+        </select>
+    </div>
+    
+    <button onclick="testDatabase()">Test Database Connection</button>
+    <button onclick="testCrimeEndpoint()">Test Crime Endpoint</button>
+    
+    <div id="result"></div>
+
+    <script>
+        async function testDatabase() {
+            const resultDiv = document.getElementById('result');
+            resultDiv.innerHTML = '<div class="result">Testing database connection...</div>';
+            
+            try {
+                const response = await fetch('/test-db');
+                const result = await response.json();
+                
+                if (result.success) {
+                    resultDiv.innerHTML = `<div class="result success">Database connection successful: ${result.message}</div>`;
+                } else {
+                    resultDiv.innerHTML = `<div class="result error">Database connection failed: ${result.error}</div>`;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `<div class="result error">Error testing database: ${error.message}</div>`;
+            }
+        }
+        
+        async function testCrimeEndpoint() {
+            const resultDiv = document.getElementById('result');
+            resultDiv.innerHTML = '<div class="result">Testing crime endpoint...</div>';
+            
+            const crimeData = {
+                location: {
+                    district_id: parseInt(document.getElementById('district_id').value),
+                    area_name: document.getElementById('area_name').value,
+                    city: document.getElementById('city').value,
+                    latitude: parseFloat(document.getElementById('latitude').value),
+                    longitude: parseFloat(document.getElementById('longitude').value)
+                },
+                crime: {
+                    crime_type: document.getElementById('crime_type').value,
+                    description: document.getElementById('description').value,
+                    date_time: document.getElementById('date_time').value,
+                    status: document.getElementById('status').value
+                }
+            };
+            
+            console.log('Sending data:', crimeData);
+            
+            try {
+                const response = await fetch('/api/crimes', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(crimeData)
+                });
+                
+                console.log('Response status:', response.status);
+                console.log('Response headers:', [...response.headers.entries()]);
+                
+                const responseText = await response.text();
+                console.log('Response text:', responseText);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${responseText}`);
+                }
+                
+                if (!responseText.trim()) {
+                    throw new Error('Empty response from server');
+                }
+                
+                const result = JSON.parse(responseText);
+                console.log('Parsed result:', result);
+                
+                if (result.success) {
+                    resultDiv.innerHTML = `<div class="result success">Crime created successfully! Crime ID: ${result.data.crime_id}</div>`;
+                } else {
+                    resultDiv.innerHTML = `<div class="result error">Error: ${result.error || result.message}</div>`;
+                }
+                
+            } catch (error) {
+                console.error('Error:', error);
+                resultDiv.innerHTML = `<div class="result error">Error: ${error.message}</div>`;
+            }
+        }
+    </script>
+</body>
+</html>

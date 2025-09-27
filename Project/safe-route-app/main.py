@@ -163,15 +163,16 @@ async def create_crime(crime_data: CrimeData):
                 print("Inserting crime...")
                 crime_result = conn.execute(
                     text("""
-                        INSERT INTO crime (crime_type, description, date_time, location_id, status, created_at)
-                        VALUES (:crime_type, :description, :date_time, :location_id, :status, :created_at)
+                        INSERT INTO crime (crime_type, description, date_time, location_id, station_id, case_status, created_at)
+                        VALUES (:crime_type, :description, :date_time, :location_id, :station_id, :case_status, :created_at)
                     """),
                     {
                         "crime_type": crime_data.crime["crime_type"],
                         "description": crime_data.crime["description"],
                         "date_time": crime_data.crime["date_time"],
                         "location_id": location_id,
-                        "status": crime_data.crime["status"],
+                        "station_id": crime_data.crime.get("station_id", 1),  # Default to station 1
+                        "case_status": crime_data.crime["status"],  # Map status to case_status
                         "created_at": datetime.utcnow()
                     }
                 )
@@ -184,8 +185,8 @@ async def create_crime(crime_data: CrimeData):
                     print("Inserting victim...")
                     victim_result = conn.execute(
                         text("""
-                            INSERT INTO victim (full_name, dob, gender, address, phone_number, email, injury_details, created_at)
-                            VALUES (:full_name, :dob, :gender, :address, :phone_number, :email, :injury_details, :created_at)
+                            INSERT INTO victim (full_name, dob, gender, address, phone_number, injury_details, created_at)
+                            VALUES (:full_name, :dob, :gender, :address, :phone_number, :injury_details, :created_at)
                         """),
                         {
                             "full_name": crime_data.victim["full_name"],
@@ -193,7 +194,6 @@ async def create_crime(crime_data: CrimeData):
                             "gender": crime_data.victim.get("gender"),
                             "address": crime_data.victim.get("address"),
                             "phone_number": crime_data.victim.get("phone_number"),
-                            "email": crime_data.victim.get("email"),
                             "injury_details": crime_data.victim.get("injury_details"),
                             "created_at": datetime.utcnow()
                         }
@@ -204,13 +204,13 @@ async def create_crime(crime_data: CrimeData):
                     # Insert Crime-Victim relationship
                     conn.execute(
                         text("""
-                            INSERT INTO crime_victim (crime_id, victim_id, injury_level)
-                            VALUES (:crime_id, :victim_id, :injury_level)
+                            INSERT INTO crime_victim (crime_id, victim_id, harm_level)
+                            VALUES (:crime_id, :victim_id, :harm_level)
                         """),
                         {
                             "crime_id": crime_id,
                             "victim_id": victim_id,
-                            "injury_level": "minor"
+                            "harm_level": "minor"
                         }
                     )
                 
@@ -220,8 +220,8 @@ async def create_crime(crime_data: CrimeData):
                     print("Inserting criminal...")
                     criminal_result = conn.execute(
                         text("""
-                            INSERT INTO criminal (full_name, alias_name, dob, gender, address, marital_status, previous_crimes, created_at)
-                            VALUES (:full_name, :alias_name, :dob, :gender, :address, :marital_status, :previous_crimes, :created_at)
+                            INSERT INTO criminal (full_name, alias_name, dob, gender, address, marital_status, past_record, created_at)
+                            VALUES (:full_name, :alias_name, :dob, :gender, :address, :marital_status, :past_record, :created_at)
                         """),
                         {
                             "full_name": crime_data.criminal["full_name"],
@@ -230,7 +230,7 @@ async def create_crime(crime_data: CrimeData):
                             "gender": crime_data.criminal.get("gender"),
                             "address": crime_data.criminal.get("address"),
                             "marital_status": crime_data.criminal.get("marital_status"),
-                            "previous_crimes": crime_data.criminal.get("previous_crimes"),
+                            "past_record": crime_data.criminal.get("previous_crimes"),
                             "created_at": datetime.utcnow()
                         }
                     )
@@ -240,13 +240,13 @@ async def create_crime(crime_data: CrimeData):
                     # Insert Crime-Criminal relationship
                     conn.execute(
                         text("""
-                            INSERT INTO crime_criminal (crime_id, criminal_id, notes)
-                            VALUES (:crime_id, :criminal_id, :notes)
+                            INSERT INTO crime_criminal (crime_id, criminal_id, role)
+                            VALUES (:crime_id, :criminal_id, :role)
                         """),
                         {
                             "crime_id": crime_id,
                             "criminal_id": criminal_id,
-                            "notes": "Initial report"
+                            "role": "Suspect"
                         }
                     )
                 
@@ -273,13 +273,13 @@ async def create_crime(crime_data: CrimeData):
                     # Insert Crime-Weapon relationship
                     conn.execute(
                         text("""
-                            INSERT INTO crime_weapon (crime_id, weapon_id, usage_detail)
-                            VALUES (:crime_id, :weapon_id, :usage_detail)
+                            INSERT INTO crime_weapon (crime_id, weapon_id, usage_desc)
+                            VALUES (:crime_id, :weapon_id, :usage_desc)
                         """),
                         {
                             "crime_id": crime_id,
                             "weapon_id": weapon_id,
-                            "usage_detail": "Used in crime"
+                            "usage_desc": "Used in crime"
                         }
                     )
                 
@@ -623,6 +623,15 @@ async def test_database():
             return {"success": True, "message": "Database connection successful", "test": result[0]}
     except Exception as e:
         return {"success": False, "error": str(e), "message": "Database connection failed"}
+
+@app.get("/test-crime", response_class=HTMLResponse)
+async def test_crime_page():
+    """Serve the test crime page"""
+    try:
+        with open("test_crime.html", "r", encoding="utf-8") as f:
+            return HTMLResponse(content=f.read())
+    except FileNotFoundError:
+        return HTMLResponse(content="Test page not found", status_code=404)
 
 @app.get("/")
 def read_root():

@@ -539,10 +539,6 @@
               <label class="form-label">Victim Phone Number</label>
               <input type="tel" class="form-input" name="victim_phone">
             </div>
-            <div class="form-group">
-              <label class="form-label">Victim Email</label>
-              <input type="email" class="form-input" name="victim_email">
-            </div>
           </div>
           
           <div class="form-group">
@@ -831,7 +827,6 @@
           gender: crimeData.victim_gender || null,
           address: crimeData.victim_address || null,
           phone_number: crimeData.victim_phone || null,
-          email: crimeData.victim_email || null,
           injury_details: crimeData.injury_details || null
         } : null,
         // Criminal data (only include if fields are filled)

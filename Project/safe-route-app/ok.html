@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Crime DBMS – Wanted & Missing Dashboard</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: '#0ea5e9',
+            dark: '#0b1220',
+            card: '#0f172a',
+            accent: '#22d3ee'
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    /* Flip card animation */
+    .flip-card { perspective: 1000px; }
+    .flip-inner { transition: transform 0.6s; transform-style: preserve-3d; }
+    .flip-card:hover .flip-inner, .flip-card:focus-within .flip-inner { transform: rotateY(180deg); }
+    .flip-front, .flip-back { backface-visibility: hidden; -webkit-backface-visibility: hidden; }
+    .flip-back { transform: rotateY(180deg); }
+
+    /* Compact scrollbar for grids */
+    .thin-scrollbar::-webkit-scrollbar { height: 6px; width: 6px; }
+    .thin-scrollbar::-webkit-scrollbar-thumb { background: #334155; border-radius: 6px; }
+    .thin-scrollbar { scrollbar-width: thin; }
+  </style>
+</head>
+<body class="bg-dark text-white min-h-screen">
+  <!-- Topbar -->
+  <header class="sticky top-0 z-40 border-b border-white/10 bg-dark/80 backdrop-blur">
+    <div class="max-w-7xl mx-auto px-4 py-4 flex items-center gap-4">
+      <div class="flex items-center gap-3">
+        <div class="w-9 h-9 rounded-xl bg-primary/20 grid place-items-center">🚔</div>
+        <h1 class="text-lg font-semibold tracking-tight">Crime DBMS — Wanted & Missing Dashboard</h1>
+      </div>
+      <nav class="ml-auto flex gap-2">
+        <button data-tab="wanted" class="tab-btn px-4 py-2 rounded-xl bg-primary/20 hover:bg-primary/30">Wanted</button>
+        <button data-tab="missing" class="tab-btn px-4 py-2 rounded-xl hover:bg-white/10">Missing Persons</button>
+        <button data-tab="report" class="tab-btn px-4 py-2 rounded-xl hover:bg-white/10">Report Missing</button>
+      </nav>
+    </div>
+  </header>
+
+  <main class="max-w-7xl mx-auto px-4 py-8 space-y-8">
+    <!-- Filters -->
+    <section id="filters" class="grid gap-4 md:grid-cols-3">
+      <div class="col-span-2 flex items-center gap-3">
+        <input id="searchInput" type="text" placeholder="Search name, alias, location…" class="w-full bg-card/80 border border-white/10 rounded-xl px-4 py-2 outline-none focus:ring-2 focus:ring-primary" />
+        <select id="severityFilter" class="bg-card/80 border border-white/10 rounded-xl px-3 py-2 outline-none focus:ring-2 focus:ring-primary">
+          <option value="">All Severities</option>
+          <option>Low</option>
+          <option>Medium</option>
+          <option>High</option>
+          <option>Critical</option>
+        </select>
+      </div>
+      <div class="text-right">
+        <button id="refreshBtn" class="px-4 py-2 rounded-xl bg-primary hover:bg-sky-500">Refresh</button>
+      </div>
+    </section>
+
+    <!-- Wanted Criminals Grid (Flip Cards) -->
+    <section id="tab-wanted" class="tab hidden">
+      <h2 class="text-2xl font-semibold mb-4">Wanted Criminals</h2>
+      <div id="wantedGrid" class="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 thin-scrollbar"></div>
+    </section>
+
+    <!-- Missing Persons List -->
+    <section id="tab-missing" class="tab hidden">
+      <h2 class="text-2xl font-semibold mb-4">Missing Persons</h2>
+      <div class="bg-card/50 border border-white/10 rounded-2xl overflow-hidden">
+        <table class="w-full text-sm">
+          <thead class="bg-white/5">
+            <tr>
+              <th class="text-left p-3">Photo</th>
+              <th class="text-left p-3">Name</th>
+              <th class="text-left p-3">Age</th>
+              <th class="text-left p-3">Last Seen</th>
+              <th class="text-left p-3">Location</th>
+              <th class="text-left p-3">Status</th>
+              <th class="text-left p-3">Action</th>
+            </tr>
+          </thead>
+          <tbody id="missingTable"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- Report Missing Person Form -->
+    <section id="tab-report" class="tab hidden">
+      <h2 class="text-2xl font-semibold mb-4">Report a Missing Person</h2>
+      <form id="reportForm" class="grid gap-4 md:grid-cols-2 bg-card/50 border border-white/10 p-6 rounded-2xl">
+        <div>
+          <label class="block text-sm mb-1">Full Name</label>
+          <input name="full_name" required class="w-full bg-card/80 border border-white/10 rounded-xl px-3 py-2 focus:ring-2 focus:ring-primary" />
+        </div>
+        <div>
+          <label class="block text-sm mb-1">Age</label>
+          <input name="age" type="number" min="0" required class="w-full bg-card/80 border border-white/10 rounded-xl px-3 py-2 focus:ring-2 focus:ring-primary" />
+        </div>
+        <div class="md:col-span-2">
+          <label class="block text-sm mb-1">Last Seen Location</label>
+          <input name="last_seen_location" required class="w-full bg-card/80 border border-white/10 rounded-xl px-3 py-2 focus:ring-2 focus:ring-primary" />
+        </div>
+        <div class="md:col-span-2">
+          <label class="block text-sm mb-1">Last Seen Date & Time</label>
+          <input name="last_seen_time" type="datetime-local" required class="w-full bg-card/80 border border-white/10 rounded-xl px-3 py-2 focus:ring-2 focus:ring-primary" />
+        </div>
+        <div class="md:col-span-2">
+          <label class="block text-sm mb-1">Description (clothes, marks, context)</label>
+          <textarea name="description" rows="3" class="w-full bg-card/80 border border-white/10 rounded-xl px-3 py-2 focus:ring-2 focus:ring-primary"></textarea>
+        </div>
+        <div>
+          <label class="block text-sm mb-1">Reporter Name</label>
+          <input name="reporter_name" required class="w-full bg-card/80 border border-white/10 rounded-xl px-3 py-2 focus:ring-2 focus:ring-primary" />
+        </div>
+        <div>
+          <label class="block text-sm mb-1">Reporter Contact</label>
+          <input name="reporter_contact" required class="w-full bg-card/80 border border-white/10 rounded-xl px-3 py-2 focus:ring-2 focus:ring-primary" />
+        </div>
+        <div class="md:col-span-2">
+          <label class="block text-sm mb-1">Upload Recent Photo</label>
+          <input name="photo" type="file" accept="image/*" class="w-full bg-card/80 border border-white/10 rounded-xl px-3 py-2" />
+        </div>
+        <div class="md:col-span-2 flex items-center gap-3">
+          <input id="consent" type="checkbox" required />
+          <label for="consent" class="text-sm">I confirm the information is accurate to my knowledge and consent to data processing.</label>
+        </div>
+        <div class="md:col-span-2 text-right">
+          <button class="px-4 py-2 rounded-xl bg-primary hover:bg-sky-500">Submit Report</button>
+        </div>
+      </form>
+      <p id="reportMsg" class="mt-3 text-sm text-accent hidden">Report submitted. Pending verification.</p>
+    </section>
+  </main>
+
+  <script>
+    // ---- Demo Data (replace with API calls) ----
+    const wantedData = [
+      {
+        id: 101,
+        name: 'Rahim Uddin',
+        aliases: ['R. Khan', 'Arif'],
+        crime: 'Armed Robbery',
+        severity: 'High',
+        last_known_location: 'Dhaka, Mirpur',
+        reward: 50000,
+        img: 'https://images.unsplash.com/photo-1600878459138-88d9d9b723a5?q=80&w=800&auto=format&fit=crop'
+      },
+      {
+        id: 102,
+        name: 'Shahidul Islam',
+        aliases: ['Shahid'],
+        crime: 'Fraud / Embezzlement',
+        severity: 'Medium',
+        last_known_location: 'Chattogram',
+        reward: 20000,
+        img: 'https://images.unsplash.com/photo-1547425260-76bcadfb4f2c?q=80&w=800&auto=format&fit=crop'
+      },
+      {
+        id: 103,
+        name: 'Unknown (CCTV #A12)',
+        aliases: [],
+        crime: 'Hit-and-run',
+        severity: 'Critical',
+        last_known_location: 'Khulna',
+        reward: 100000,
+        img: 'https://images.unsplash.com/photo-1544006659-f0b21884ce1d?q=80&w=800&auto=format&fit=crop'
+      }
+    ];
+
+    const missingData = [
+      {
+        id: 501,
+        name: 'Nusrat Jahan',
+        age: 22,
+        last_seen_time: '2025-09-25T18:30',
+        last_seen_location: 'Uttara Sector 11, Dhaka',
+        status: 'Open',
+        img: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?q=80&w=800&auto=format&fit=crop'
+      },
+      {
+        id: 502,
+        name: 'Masud Parvez',
+        age: 29,
+        last_seen_time: '2025-09-20T21:10',
+        last_seen_location: 'Rajshahi New Market',
+        status: 'Open',
+        img: 'https://images.unsplash.com/photo-1544723795-3fb6469f5b39?q=80&w=800&auto=format&fit=crop'
+      }
+    ];
+
+    // ---- Renderers ----
+    function renderWanted(list) {
+      const grid = document.getElementById('wantedGrid');
+      grid.innerHTML = '';
+      list.forEach((p) => {
+        const card = document.createElement('div');
+        card.className = 'flip-card';
+        card.innerHTML = `
+          <div class="flip-inner relative h-80 rounded-2xl overflow-hidden border border-white/10 bg-card">
+            <div class="flip-front absolute inset-0">
+              <img src="${p.img}" alt="${p.name}" class="h-48 w-full object-cover"/>
+              <div class="p-4 space-y-2">
+                <div class="text-lg font-semibold">${p.name}</div>
+                <div class="text-xs text-white/70">${p.crime}</div>
+                <div class="flex items-center justify-between text-xs">
+                  <span class="px-2 py-0.5 rounded bg-white/5 border border-white/10">${p.severity}</span>
+                  <span class="text-white/70">${p.last_known_location}</span>
+                </div>
+              </div>
+            </div>
+            <div class="flip-back absolute inset-0 p-4 bg-card/90">
+              <div class="text-sm space-y-2">
+                <div><span class="text-white/60">Aliases:</span> ${p.aliases.length ? p.aliases.join(', ') : 'N/A'}</div>
+                <div><span class="text-white/60">Reward:</span> ৳${p.reward?.toLocaleString?.('en-BD') ?? '—'}</div>
+                <div><span class="text-white/60">Last Known:</span> ${p.last_known_location}</div>
+                <div class="pt-2 flex gap-2">
+                  <button class="px-3 py-1.5 rounded-lg bg-primary/20 hover:bg-primary/30 text-sm">Details</button>
+                  <button class="px-3 py-1.5 rounded-lg bg-accent/20 hover:bg-accent/30 text-sm">Report Sighting</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        `;
+        grid.appendChild(card);
+      });
+    }
+
+    function renderMissing(list) {
+      const tbody = document.getElementById('missingTable');
+      tbody.innerHTML = '';
+      list.forEach((m) => {
+        const tr = document.createElement('tr');
+        tr.className = 'border-t border-white/10';
+        tr.innerHTML = `
+          <td class="p-3"><img src="${m.img}" alt="${m.name}" class="w-14 h-14 rounded-lg object-cover" /></td>
+          <td class="p-3 font-medium">${m.name}</td>
+          <td class="p-3">${m.age}</td>
+          <td class="p-3 text-white/80">${new Date(m.last_seen_time).toLocaleString()}</td>
+          <td class="p-3">${m.last_seen_location}</td>
+          <td class="p-3"><span class="px-2 py-0.5 rounded bg-white/5 border border-white/10">${m.status}</span></td>
+          <td class="p-3">
+            <button class="px-3 py-1.5 rounded-lg bg-primary/20 hover:bg-primary/30 text-sm">View</button>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    // ---- Filters ----
+    function applyFilters() {
+      const q = document.getElementById('searchInput').value.toLowerCase();
+      const sev = document.getElementById('severityFilter').value;
+      const filtered = wantedData.filter(p => {
+        const text = [p.name, ...(p.aliases||[]), p.crime, p.last_known_location].join(' ').toLowerCase();
+        const okSev = sev ? p.severity === sev : true;
+        return text.includes(q) && okSev;
+      });
+      renderWanted(filtered);
+    }
+
+    // ---- Tabs ----
+    const tabBtns = document.querySelectorAll('.tab-btn');
+    const tabs = {
+      wanted: document.getElementById('tab-wanted'),
+      missing: document.getElementById('tab-missing'),
+      report: document.getElementById('tab-report')
+    };
+    function showTab(key) {
+      Object.values(tabs).forEach(el => el.classList.add('hidden'));
+      tabs[key].classList.remove('hidden');
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('bg-primary/20'));
+      document.querySelector(`.tab-btn[data-tab="${key}"]`).classList.add('bg-primary/20');
+    }
+
+    // ---- Report Form (demo) ----
+    const reportForm = document.getElementById('reportForm');
+    reportForm?.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const fd = new FormData(reportForm);
+      // TODO: POST to backend endpoint like /api/missing_reports
+      // const res = await fetch('/api/missing_reports', { method: 'POST', body: fd });
+      // const data = await res.json();
+      console.log('Report payload (demo):', Object.fromEntries(fd.entries()));
+      document.getElementById('reportMsg').classList.remove('hidden');
+      reportForm.reset();
+    });
+
+    // ---- Init ----
+    window.addEventListener('DOMContentLoaded', () => {
+      renderWanted(wantedData);
+      renderMissing(missingData);
+      showTab('wanted');
+      document.getElementById('searchInput').addEventListener('input', applyFilters);
+      document.getElementById('severityFilter').addEventListener('change', applyFilters);
+      document.getElementById('refreshBtn').addEventListener('click', () => {
+        // TODO: Re-fetch from backend endpoints then re-render
+        renderWanted(wantedData);
+        renderMissing(missingData);
+      });
+      tabBtns.forEach(btn => btn.addEventListener('click', () => showTab(btn.dataset.tab)));
+    });
+  </script>
+</body>
+</html>

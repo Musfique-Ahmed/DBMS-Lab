@@ -1,705 +1,590 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="dark">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Community Safety Portal</title>
-    <!-- Load Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Use Inter Font -->
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap');
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: #0d1117; /* Dark background */
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>My Safety</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            base: {
+              bg: '#0b1220',
+              card: '#0f172a',
+              card2: '#111827',
+              border: '#23314d',
+              text: '#e5e7eb',
+              mute: '#9ca3af',
+              accent: '#22c55e',
+              accent2: '#38bdf8',
+              warn: '#f59e0b',
+              danger: '#ef4444'
+            }
+          }
         }
-        .container-card {
-            background-color: #161b22; /* Slightly lighter card background */
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.5), 0 2px 4px -2px rgba(0, 0, 0, 0.5);
-            border: 1px solid #30363d;
-        }
-        .status-missing { background-color: #9a3412; } /* Reddish brown */
-        .status-found { background-color: #166534; } /* Dark green */
-        .header-bg { background-color: #1f242b; }
-        .btn-primary {
-            background-color: #58a6ff;
-            color: #161b22;
-            transition: background-color 0.2s;
-        }
-        .btn-primary:hover {
-            background-color: #79c0ff;
-        }
-        .btn-secondary {
-            background-color: #30363d;
-            color: #d1d5db;
-            transition: background-color 0.2s;
-        }
-        .btn-secondary:hover {
-            background-color: #4b5563;
-        }
-    </style>
+      }
+    }
+  </script>
+  <style>
+    .card-hover{transition:transform .2s ease, box-shadow .2s ease}
+    .card-hover:hover{transform:translateY(-2px);box-shadow:0 10px 25px rgba(0,0,0,.35)}
+    .backdrop{backdrop-filter: blur(6px)}
+    input[type="checkbox"]{accent-color:#22c55e}
+  </style>
 </head>
-<body class="text-gray-200">
+<body class="min-h-screen bg-[color:var(--twc,theme(colors.base.bg))] text-[color:var(--twt,theme(colors.base.text))]">
+  <!-- Header -->
+  <header class="sticky top-0 z-30 bg-slate-900/70 backdrop border-b border-[color:var(--twb,theme(colors.base.border))]">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <div class="w-9 h-9 rounded-xl bg-[color:var(--twa,theme(colors.base.accent))] grid place-items-center text-slate-900 font-bold">MS</div>
+        <h1 class="text-xl font-semibold text-white">My Safety</h1>
+      </div>
+      <nav class="hidden sm:flex gap-1">
+        <button data-tab="wanted" class="tab-btn px-3 py-2 rounded-lg text-sm font-medium hover:bg-slate-800 text-white">Wanted</button>
+        <button data-tab="missing" class="tab-btn px-3 py-2 rounded-lg text-sm font-medium hover:bg-slate-800 text-white">Missing Persons</button>
+        <button data-tab="report" class="tab-btn px-3 py-2 rounded-lg text-sm font-medium hover:bg-slate-800 text-white">Report to Police</button>
+      </nav>
+    </div>
+  </header>
 
-    <div id="app" class="min-h-screen flex flex-col">
-        <!-- Header & Navigation -->
-        <header class="header-bg p-4 sticky top-0 z-10 border-b border-[#30363d]">
-            <div class="max-w-7xl mx-auto flex flex-col sm:flex-row justify-between items-center">
-                <div class="flex flex-col sm:flex-row items-center w-full sm:w-auto">
-                    <h1 class="text-2xl font-bold text-[#58a6ff] mb-2 sm:mb-0 sm:mr-6">Safety & Crime Monitor</h1>
-                    <!-- MOVED AUTH INFO HERE: This element now persists and is not cleared by view switching -->
-                    <div id="auth-info" class="text-xs text-gray-500 mb-2 sm:mb-0">Authenticating...</div>
-                </div>
-                
-                <nav class="flex space-x-2 sm:space-x-4">
-                    <button onclick="showView('wanted')" class="px-4 py-2 rounded-lg font-medium hover:bg-gray-700 transition duration-150">Wanted Criminals</button>
-                    <button onclick="showView('missing')" class="px-4 py-2 rounded-lg font-medium hover:bg-gray-700 transition duration-150">Missing Persons</button>
-                    <button onclick="showView('report')" class="btn-primary px-4 py-2 rounded-lg font-bold">Report Missing</button>
-                </nav>
-            </div>
-        </header>
-
-        <!-- Main Content Area -->
-        <main class="flex-grow p-4 md:p-8 max-w-7xl mx-auto w-full">
-            <div id="content">
-                <!-- Initial content/loading state -->
-                <div class="text-center p-12">
-                    <h2 class="text-3xl font-semibold mb-4 text-gray-100">Welcome to the Safety Portal</h2>
-                    <p class="text-gray-400">Loading application data...</p>
-                    <div class="mt-4"><div class="animate-spin inline-block w-8 h-8 border-4 border-t-4 border-[#58a6ff] border-opacity-50 rounded-full"></div></div>
-                </div>
-            </div>
-        </main>
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 py-8">
+    <!-- Tabs for mobile -->
+    <div class="sm:hidden mb-6">
+      <select id="tabSelect" class="w-full border border-[color:var(--twb,theme(colors.base.border))] rounded-lg px-3 py-2 bg-[color:var(--twc,theme(colors.base.card))] text-white">
+        <option value="wanted">Wanted Criminals</option>
+        <option value="missing">Missing Persons</option>
+        <option value="report">Report Missing to Police</option>
+      </select>
     </div>
 
-    <!-- Firebase SDKs -->
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, getDoc, addDoc, setDoc, updateDoc, onSnapshot, collection, query, where, serverTimestamp, setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+    <!-- WANTED DASHBOARD -->
+    <section id="tab-wanted" class="tab">
+      <div class="flex items-center justify-between mb-4">
+        <h2 class="text-2xl font-semibold text-white">Wanted Criminals</h2>
+        <div class="flex gap-2">
+          <input id="searchWanted" placeholder="Search name, crime, area…" class="w-64 max-w-[60vw] border border-[color:var(--twb,theme(colors.base.border))] rounded-lg px-3 py-2 text-sm bg-[color:var(--twc,theme(colors.base.card))] placeholder-[color:var(--twm,theme(colors.base.mute))] text-white"/>
+          <button id="refreshWanted" class="px-3 py-2 text-sm rounded-lg bg-slate-800 text-white hover:bg-slate-700 border border-[color:var(--twb,theme(colors.base.border))]">Refresh</button>
+        </div>
+      </div>
+      <div id="wantedGrid" class="grid sm:grid-cols-2 lg:grid-cols-3 gap-5"></div>
+    </section>
 
-        // Global variables provided by the environment
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
-        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+    <!-- MISSING PERSONS DASHBOARD -->
+    <section id="tab-missing" class="tab hidden">
+      <div class="flex items-center justify-between mb-4">
+        <h2 class="text-2xl font-semibold text-white">Missing Persons</h2>
+        <div class="flex gap-2">
+          <input id="searchMissing" placeholder="Search name, hometown…" class="w-64 max-w-[60vw] border border-[color:var(--twb,theme(colors.base.border))] rounded-lg px-3 py-2 text-sm bg-[color:var(--twc,theme(colors.base.card))] placeholder-[color:var(--twm,theme(colors.base.mute))] text-white"/>
+          <button id="refreshMissing" class="px-3 py-2 text-sm rounded-lg bg-slate-800 text-white hover:bg-slate-700 border border-[color:var(--twb,theme(colors.base.border))]">Refresh</button>
+        </div>
+      </div>
+      <div id="missingGrid" class="grid sm:grid-cols-2 lg:grid-cols-3 gap-5"></div>
+    </section>
 
-        // Initialize Firebase
-        const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
-        const auth = getAuth(app);
+    <!-- REPORT MISSING TO POLICE -->
+    <section id="tab-report" class="tab hidden">
+      <h2 class="text-2xl font-semibold mb-4 text-white">Report Missing to Police</h2>
+      <p class="text-sm text-[color:var(--twm,theme(colors.base.mute))] mb-6">Fill in the details. The report will be forwarded to the nearest police station and a case ID will be generated.</p>
 
-        // Set logging for debugging Firestore issues
-        setLogLevel('Debug');
+      <form id="reportForm" class="bg-[color:var(--twc,theme(colors.base.card))] rounded-2xl border border-[color:var(--twb,theme(colors.base.border))] p-6 grid grid-cols-1 md:grid-cols-2 gap-4 text-white">
+        <!-- Person details -->
+        <div class="md:col-span-2">
+          <h3 class="font-semibold text-lg mb-2">Person Details</h3>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label class="block text-sm font-medium mb-1">Full Name</label>
+              <input name="full_name" required class="w-full border border-[color:var(--twb,theme(colors.base.border))] rounded-lg px-3 py-2 bg-slate-900 text-white placeholder-[color:var(--twm,theme(colors.base.mute))]" />
+            </div>
+            <div>
+              <label class="block text-sm font-medium mb-1">Nickname</label>
+              <input name="nickname" class="w-full border border-[color:var(--twb,theme(colors.base.border))] rounded-lg px-3 py-2 bg-slate-900 text-white placeholder-[color:var(--twm,theme(colors.base.mute))]" />
+            </div>
+            <div>
+              <label class="block text-sm font-medium mb-1">Hometown</label>
+              <input name="hometown" class="w-full border border-[color:var(--twb,theme(colors.base.border))] rounded-lg px-3 py-2 bg-slate-900 text-white placeholder-[color:var(--twm,theme(colors.base.mute))]" />
+            </div>
+            <div>
+              <label class="block text-sm font-medium mb-1">Age</label>
+              <input name="age" type="number" min="0" class="w-full border border-[color:var(--twb,theme(colors.base.border))] rounded-lg px-3 py-2 bg-slate-900 text-white" />
+            </div>
+            <div>
+              <label class="block text-sm font-medium mb-1">Weight (kg)</label>
+              <input name="weight_kg" type="number" min="0" step="0.1" class="w-full border border-[color:var(--twb,theme(colors.base.border))] rounded-lg px-3 py-2 bg-slate-900 text-white" />
+            </div>
+            <div>
+              <label class="block text-sm font-medium mb-1">Hair Color</label>
+              <input name="hair_color" class="w-full border border-[color:var(--twb,theme(colors.base.border))] rounded-lg px-3 py-2 bg-slate-900 text-white placeholder-[color:var(--twm,theme(colors.base.mute))]" />
+            </div>
+            <div class="sm:col-span-2">
+              <label class="block text-sm font-medium mb-1">Photo Upload</label>
+              <input name="photo_file" type="file" accept="image/*" class="w-full border border-[color:var(--twb,theme(colors.base.border))] rounded-lg px-3 py-2 bg-slate-900 text-white" />
+            </div>
+          </div>
+        </div>
 
-        // Firestore paths
-        const PUBLIC_PATH = `/artifacts/${appId}/public/data`;
-        const WANTED_COLLECTION_PATH = `${PUBLIC_PATH}/wanted_criminals`;
-        const MISSING_COLLECTION_PATH = `${PUBLIC_PATH}/missing_persons`;
-        
-        let userId = null;
-        let isAuthReady = false;
+        <!-- Last seen -->
+        <div class="md:col-span-2">
+          <h3 class="font-semibold text-lg mb-2">Last Seen</h3>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label class="block text-sm font-medium mb-1">Time & Date</label>
+              <input name="last_seen_time" type="datetime-local" class="w-full border border-[color:var(--twb,theme(colors.base.border))] rounded-lg px-3 py-2 bg-slate-900 text-white" />
+            </div>
+            <div>
+              <label class="block text-sm font-medium mb-1">Location</label>
+              <div class="flex gap-2">
+                <input name="last_seen_location" class="flex-1 border border-[color:var(--twb,theme(colors.base.border))] rounded-lg px-3 py-2 bg-slate-900 text-white placeholder-[color:var(--twm,theme(colors.base.mute))]" />
+                <button type="button" data-target="last_seen_location" class="geo-btn px-3 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 border border-[color:var(--twb,theme(colors.base.border))]">Use my location</button>
+              </div>
+            </div>
+          </div>
+        </div>
 
-        // --- Authentication and Initialization ---
-        async function initializeAuth() {
-            try {
-                if (initialAuthToken) {
-                    await signInWithCustomToken(auth, initialAuthToken);
-                } else {
-                    await signInAnonymously(auth);
-                }
-            } catch (error) {
-                console.error("Firebase Auth Error:", error);
-            }
-        }
+        <!-- Description -->
+        <div class="md:col-span-2">
+          <label class="block text-sm font-medium mb-1">Description (height, blood group, clothing, marks, medical attention, etc.)</label>
+          <textarea name="description" rows="5" class="w-full border border-[color:var(--twb,theme(colors.base.border))] rounded-lg px-3 py-2 bg-slate-900 text-white" placeholder="Add height, blood group, clothing, birthmarks/scars, medical attention if needed, etc."></textarea>
+        </div>
 
-        onAuthStateChanged(auth, async (user) => {
-            if (user) {
-                userId = user.uid;
-                // Safely update auth-info now that it is outside of the content div
-                document.getElementById('auth-info').textContent = `User ID: ${userId} (Authenticated)`;
-                await seedInitialData();
-            } else {
-                userId = crypto.randomUUID(); // Fallback to a random ID if not authenticated
-                document.getElementById('auth-info').textContent = `User ID: ${userId} (Anonymous)`;
-            }
-            isAuthReady = true;
-            // The view is shown ONLY when auth state is confirmed
-            showView('wanted');
-        });
-        
-        initializeAuth();
+        <!-- Reporter -->
+        <div class="md:col-span-2">
+          <h3 class="font-semibold text-lg mb-2">Reporter Contact</h3>
+          <div class="grid grid-cols-1 sm:grid-cols-4 gap-4">
+            <div>
+              <label class="block text-sm font-medium mb-1">Your Name</label>
+              <input name="reporter_name" required class="w-full border border-[color:var(--twb,theme(colors.base.border))] rounded-lg px-3 py-2 bg-slate-900 text-white" />
+            </div>
+            <div>
+              <label class="block text-sm font-medium mb-1">Phone</label>
+              <input name="reporter_phone" required class="w-full border border-[color:var(--twb,theme(colors.base.border))] rounded-lg px-3 py-2 bg-slate-900 text-white" />
+            </div>
+            <div>
+              <label class="block text-sm font-medium mb-1">Email</label>
+              <input name="reporter_email" type="email" class="w-full border border-[color:var(--twb,theme(colors.base.border))] rounded-lg px-3 py-2 bg-slate-900 text-white" />
+            </div>
+            <div>
+              <label class="block text-sm font-medium mb-1">Reporter Relation</label>
+              <input name="reporter_relation" placeholder="Parent / sibling / neighbor / other" class="w-full border border-[color:var(--twb,theme(colors.base.border))] rounded-lg px-3 py-2 bg-slate-900 text-white placeholder-[color:var(--twm,theme(colors.base.mute))]" />
+            </div>
+          </div>
+        </div>
 
-        // Attach Firebase variables to the global scope for use in non-module script blocks
-        window.db = db;
-        window.auth = auth;
-        window.userId = () => userId;
-        window.isAuthReady = () => isAuthReady;
-        window.WANTED_COLLECTION_PATH = WANTED_COLLECTION_PATH;
-        window.MISSING_COLLECTION_PATH = MISSING_COLLECTION_PATH;
-        window.addDoc = addDoc;
-        window.collection = collection;
-        window.onSnapshot = onSnapshot;
-        window.doc = doc;
-        window.updateDoc = updateDoc;
-        window.serverTimestamp = serverTimestamp;
-        window.getDoc = getDoc;
+        <div class="md:col-span-2 flex items-center justify-between">
+          <div class="text-xs text-[color:var(--twm,theme(colors.base.mute))]">By submitting, you consent to share these details with law enforcement.</div>
+          <button class="px-4 py-2 rounded-lg bg-[color:var(--twa,theme(colors.base.accent))] text-slate-900 font-semibold hover:brightness-110">Submit Report</button>
+        </div>
+      </form>
 
+      <div id="reportSuccess" class="hidden mt-4 p-4 rounded-xl bg-emerald-900/40 border border-emerald-700 text-emerald-300">✅ Report submitted successfully. Case ID: <span class="font-mono" id="caseId"></span></div>
+    </section>
 
-        // --- SEED MOCK DATA FUNCTION ---
-        // Insert mock data if the collections are empty for demonstration
-        async function seedInitialData() {
-            const seedDocRef = doc(db, PUBLIC_PATH, "data_seed_status");
-            const seedDocSnap = await getDoc(seedDocRef);
+    <!-- Dev/Test Panel -->
+    <section class="mt-10" aria-label="Developer Tests">
+      <div class="bg-[color:var(--twc,theme(colors.base.card2))] rounded-2xl border border-[color:var(--twb,theme(colors.base.border))] p-4">
+        <div class="flex items-center justify-between gap-3">
+          <h3 class="text-white font-semibold">Dev · Self Tests</h3>
+          <button id="runTests" class="px-3 py-2 rounded-lg bg-slate-800 text-white text-sm border border-[color:var(--twb,theme(colors.base.border))] hover:bg-slate-700">Run tests</button>
+        </div>
+        <ul id="testResults" class="mt-3 space-y-2 text-sm"></ul>
+      </div>
+    </section>
+  </main>
 
-            if (!seedDocSnap.exists() || !seedDocSnap.data().seeded) {
-                console.log("Seeding initial data...");
+  <!-- Details Modal / Action Drawer -->
+  <div id="detailsModal" class="hidden fixed inset-0 z-40">
+    <div class="absolute inset-0 bg-black/60 backdrop"></div>
+    <div class="relative z-10 max-w-2xl mx-auto mt-16 bg-[color:var(--twc,theme(colors.base.card2))] text-white rounded-2xl border border-[color:var(--twb,theme(colors.base.border))] shadow-xl overflow-hidden">
+      <div class="flex items-center justify-between border-b border-[color:var(--twb,theme(colors.base.border))] px-5 py-3">
+        <h3 id="modalTitle" class="text-lg font-semibold">Details</h3>
+        <button id="closeModal" class="p-2 hover:bg-slate-800 rounded-lg" aria-label="Close"><i data-lucide="x"></i></button>
+      </div>
+      <div id="modalBody" class="p-5"></div>
+    </div>
+  </div>
 
-                // Mock Wanted Criminals
-                await addDoc(collection(db, WANTED_COLLECTION_PATH), {
-                    name: "Victor 'The Shadow' Stone",
-                    crime: "Grand Theft, Extortion, Conspiracy",
-                    lastSeen: "Downtown Financial District, yesterday, 14:30",
-                    details: "Highly organized, known to carry false identification. Always wears a dark trench coat.",
-                    pictureUrl: "https://placehold.co/150x200/58a6ff/161b22?text=CRIMINAL+1",
-                    timestamp: serverTimestamp()
-                });
+  <script>
+    'use strict';
+    // --- Mock data (replace with API calls) ----------------------------------
+    const wantedData = [
+      {id:1, name:"Rahim Uddin", photo_url:"https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?q=80&w=600&auto=format&fit=crop", crimes:["Robbery","Extortion"], last_seen_location:"Mirpur, Dhaka", last_seen_time:"2025-09-25T18:30:00", reward:50000, note:"Considered dangerous."},
+      {id:2, name:"Tariq Hasan", photo_url:"https://images.unsplash.com/photo-1542202229-7d93c33f5d07?q=80&w=600&auto=format&fit=crop", crimes:["Fraud"], last_seen_location:"Agrabad, Chattogram", last_seen_time:"2025-09-20T14:10:00", reward:20000, note:"Drives a black sedan."},
+      {id:3, name:"Unknown Alias 'Blue'", photo_url:"https://images.unsplash.com/photo-1488426862026-3ee34a7d66df?q=80&w=600&auto=format&fit=crop", crimes:["Burglary"], last_seen_location:"Uttara, Dhaka", last_seen_time:"2025-09-28T05:45:00", reward:0, note:"Seen near construction sites."}
+    ];
 
-                // Mock Missing Person (Initial Status: Missing)
-                await addDoc(collection(db, MISSING_COLLECTION_PATH), {
-                    name: "Sarah Jenkins",
-                    age: 28,
-                    weight: 130,
-                    bloodGroup: 'O+',
-                    hairColor: 'Blonde',
-                    lastSeenLocation: 'Oakwood Park, near the main fountain',
-                    lastSeenTime: '2025-09-25, 10:00 AM',
-                    pictureUrl: "https://placehold.co/150x200/79c0ff/161b22?text=MISSING+1",
-                    status: 'Missing',
-                    reportUserId: 'SYSTEM_SEED',
-                    timestamp: serverTimestamp()
-                });
+    const missingData = [
+      {id:11, name:"Shahin Alam", nickname:"Shuvo", photo_url:"https://images.unsplash.com/photo-1500648767791-00dcc994a43e?q=80&w=600&auto=format&fit=crop", hometown:"Gazipur", age:16, weight_kg:52, hair_color:"Black", last_seen_time:"2025-09-30T19:00:00", last_seen_location:"Jatrabari, Dhaka", description:"Wearing blue t-shirt, white sneakers.", still_with_finder:false},
+      {id:12, name:"Nusrat Jahan", nickname:"Nusa", photo_url:"https://images.unsplash.com/photo-1524504388940-b1c1722653e1?q=80&w=600&auto=format&fit=crop", hometown:"Narayanganj", age:8, weight_kg:24, hair_color:"Brown", last_seen_time:"2025-09-29T17:30:00", last_seen_location:"Motijheel, Dhaka", description:"Pink frock, cartoon backpack.", still_with_finder:true}
+    ];
 
-                // Mock Missing Person (Initial Status: Found)
-                await addDoc(collection(db, MISSING_COLLECTION_PATH), {
-                    name: "Michael Chen",
-                    age: 16,
-                    weight: 110,
-                    bloodGroup: 'A-',
-                    hairColor: 'Black',
-                    lastSeenLocation: 'High School Library',
-                    lastSeenTime: '2025-09-22, 3:00 PM',
-                    pictureUrl: "https://placehold.co/150x200/58a6ff/161b22?text=FOUND+1",
-                    status: 'Found',
-                    reportUserId: 'SYSTEM_SEED',
-                    timestamp: serverTimestamp()
-                });
+    // --- Utilities -----------------------------------------------------------
+    const $$ = (sel, root=document) => Array.from(root.querySelectorAll(sel));
+    const $  = (sel, root=document) => root.querySelector(sel);
+    const fmt = (dt) => dt ? new Date(dt).toLocaleString() : "";
 
-                await setDoc(seedDocRef, { seeded: true });
-                console.log("Data seeding complete.");
-            }
-        }
-    </script>
+    // Geo helper to fill any input[name=...]
+    function fillWithGeo(inputEl){
+      if(!navigator.geolocation){ alert('Geolocation not supported on this browser.'); return; }
+      navigator.geolocation.getCurrentPosition(pos=>{
+        const {latitude, longitude} = pos.coords;
+        inputEl.value = `${latitude.toFixed(6)}, ${longitude.toFixed(6)}`;
+      }, err=>{
+        alert('Unable to get location: '+ err.message);
+      }, {enableHighAccuracy:true, timeout:10000});
+    }
 
-    <!-- Application Logic (Non-module script block) -->
-    <script>
-        let unsubscribeWanted = null;
-        let unsubscribeMissing = null;
-        const contentDiv = document.getElementById('content');
-        // Store full document data temporarily to safely navigate to detail views
-        window.detailCache = {}; 
+    // --- Tabs ---------------------------------------------------------------
+    function setActiveTab(id){
+      $$(".tab").forEach(s=>s.classList.add("hidden"));
+      $("#tab-"+id).classList.remove("hidden");
+      $$(".tab-btn").forEach(b=>{
+        const active = b.dataset.tab===id;
+        b.classList.toggle("bg-slate-200", false);
+        b.classList.toggle("bg-slate-800", active);
+        b.classList.toggle("text-white", true);
+      });
+    }
+    $$(".tab-btn").forEach(btn=>btn.addEventListener("click",()=>{ setActiveTab(btn.dataset.tab) }));
+    $("#tabSelect").addEventListener("change", e=> setActiveTab(e.target.value));
+    setActiveTab("wanted");
 
-        // --- LLM API Integration (Gemini) ---
-        const API_KEY = ""; // Provided by the Canvas environment
-        const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${API_KEY}`;
+    // --- Render Wanted ------------------------------------------------------
+    function wantedCard(item){
+      const card = document.createElement("div");
+      card.className = "card-hover bg-[color:var(--twc,theme(colors.base.card))] rounded-2xl border border-[color:var(--twb,theme(colors.base.border))] overflow-hidden";
+      card.innerHTML = `
+        <img src="${item.photo_url}" alt="${item.name}" class="w-full h-44 object-cover"/>
+        <div class="p-4">
+          <div class="flex items-center justify-between mb-1">
+            <h3 class="font-semibold text-white">${item.name}</h3>
+            <span class="text-xs px-2 py-1 rounded-full bg-red-900/40 text-red-300 border border-red-800">Wanted</span>
+          </div>
+          <p class="text-sm text-[color:var(--twm,theme(colors.base.mute))]">Last seen: ${item.last_seen_location} · ${fmt(item.last_seen_time)}</p>
+          <div class="flex gap-2 mt-3">
+            <button class="show-details px-3 py-2 rounded-lg bg-slate-800 text-white text-sm border border-[color:var(--twb,theme(colors.base.border))] hover:bg-slate-700">Show details</button>
+          </div>
+        </div>`;
+      card.querySelector('.show-details').addEventListener('click',()=>openWantedModal(item));
+      return card;
+    }
+    function renderWanted(list){
+      const grid = $("#wantedGrid");
+      grid.innerHTML = "";
+      list.forEach(item=> grid.appendChild(wantedCard(item)));
+    }
 
-        // Helper for exponential backoff during API calls
-        async function callGeminiApi(prompt, systemInstruction, maxRetries = 5) {
-            const payload = {
-                contents: [{ parts: [{ text: prompt }] }],
-                systemInstruction: { parts: [{ text: systemInstruction }] },
-            };
-
-            for (let i = 0; i < maxRetries; i++) {
-                try {
-                    const response = await fetch(API_URL, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(payload)
-                    });
-
-                    if (response.status === 429) {
-                        // Rate limit hit, wait longer
-                        const delay = Math.pow(2, i) * 1000 + Math.random() * 1000;
-                        console.warn(`Rate limit hit (429). Retrying in ${Math.round(delay / 1000)}s...`);
-                        await new Promise(resolve => setTimeout(resolve, delay));
-                        continue;
-                    }
-
-                    if (!response.ok) {
-                        throw new Error(`HTTP error! Status: ${response.status}`);
-                    }
-
-                    const result = await response.json();
-                    const text = result.candidates?.[0]?.content?.parts?.[0]?.text;
-                    
-                    if (text) {
-                        return text;
-                    } else {
-                        throw new Error("Gemini API response was valid, but contained no generated text.");
-                    }
-
-                } catch (error) {
-                    console.error(`Attempt ${i + 1} failed:`, error.message);
-                    if (i === maxRetries - 1) throw error;
-
-                    const delay = Math.pow(2, i) * 1000 + Math.random() * 1000;
-                    await new Promise(resolve => setTimeout(resolve, delay));
-                }
-            }
-        }
-
-        // --- LLM Feature 1: Wanted Criminal Profile ---
-        window.generateCriminalProfile = async function(criminalId) {
-            const outputDiv = document.getElementById('ai-profile-output');
-            outputDiv.innerHTML = '<div class="text-center p-4"><div class="animate-spin inline-block w-6 h-6 border-4 border-t-4 border-[#58a6ff] border-opacity-50 rounded-full"></div><p class="mt-2 text-[#58a6ff]">Generating detailed profile...</p></div>';
-
-            const criminal = window.detailCache[criminalId];
-            if (!criminal) {
-                outputDiv.innerHTML = '<p class="text-red-400">Error: Criminal data not found in cache.</p>';
-                return;
-            }
-
-            const systemInstruction = `You are a highly experienced and fictional forensic criminal profiler. Your task is to analyze the provided case file details and generate a concise, yet detailed, psychological profile and risk assessment for law enforcement. The profile should be divided into two main sections: 'Psychological Profile' and 'Risk Assessment & Likely Actions'. Use markdown formatting for readability, including bolding for emphasis and headers. Do not state that the profile is fictional, present it as factual analysis.`;
-            
-            const userQuery = `Analyze the following wanted criminal profile to generate a detailed forensic analysis:
-Name: ${criminal.name}
-Primary Crime: ${criminal.crime}
-Last Known Sighting/Activity: ${criminal.lastSeen}
-Behavioral Details: ${criminal.details}
-Generate the profile now.`;
-
-            try {
-                const profileText = await callGeminiApi(userQuery, systemInstruction);
-                
-                // Simple markdown to HTML conversion for rendering the LLM output
-                const htmlContent = profileText
-                    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') 
-                    .replace(/## (.*)/g, '<h4 class="text-xl font-bold mt-4 mb-2 text-gray-100">$1</h4>')
-                    .replace(/\n/g, '<br>');
-
-                outputDiv.innerHTML = `
-                    <div class="p-6 mt-6 rounded-xl border border-blue-600 bg-blue-900/20">
-                        <h3 class="text-2xl font-semibold mb-4 text-blue-300 flex items-center">
-                            <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19V6l12-3v13.5m-6 0v2.5m-6 0v2.5"></path></svg>
-                            AI Criminal Profile & Assessment
-                        </h3>
-                        <div class="text-gray-200 text-sm">${htmlContent}</div>
-                    </div>
-                `;
-            } catch (error) {
-                console.error("Gemini API call failed:", error);
-                outputDiv.innerHTML = '<p class="text-red-400 p-4 rounded-lg bg-red-900/30">Failed to generate profile. Check console for API error details.</p>';
-            }
-        }
-        
-        // --- LLM Feature 2: Missing Person Public Appeal ---
-        window.draftPublicAppeal = async function(personId) {
-            const outputDiv = document.getElementById('ai-appeal-output');
-            outputDiv.innerHTML = '<div class="text-center p-4"><div class="animate-spin inline-block w-6 h-6 border-4 border-t-4 border-red-400 border-opacity-50 rounded-full"></div><p class="mt-2 text-red-400">Drafting urgent public appeal...</p></div>';
-
-            const person = window.detailCache[personId];
-            if (!person) {
-                outputDiv.innerHTML = '<p class="text-red-400">Error: Missing person data not found in cache.</p>';
-                return;
-            }
-
-            const systemInstruction = `You are a communications specialist drafting an urgent public appeal for a missing person. Your output must be a compassionate, urgent, and highly shareable social media post designed to maximize community engagement and leads. Structure the post clearly with an urgent header, key facts (including name, age, last seen location, and last seen time), a call to action, and relevant hashtags. Use a sympathetic and professional tone. The output must be ready-to-copy text in plain text format.`;
-            
-            const userQuery = `Draft an urgent public appeal post for the following missing person:
-Name: ${person.name}
-Age: ${person.age}
-Weight: ${person.weight} lbs
-Hair Color: ${person.hairColor}
-Last Seen Location: ${person.lastSeenLocation}
-Last Seen Time: ${person.lastSeenTime}
-Picture URL (for reference, do not include in text): ${person.pictureUrl}
-
-Generate the public appeal now.`;
-
-            try {
-                const appealText = await callGeminiApi(userQuery, systemInstruction);
-                
-                // Simple formatting for display: convert newlines to breaks
-                const htmlContent = appealText
-                    .replace(/\n/g, '<br>')
-                    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>'); 
-
-                outputDiv.innerHTML = `
-                    <div class="p-6 mt-6 rounded-xl border border-red-600 bg-red-900/20">
-                        <h3 class="text-2xl font-semibold mb-4 text-red-300 flex items-center">
-                            <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
-                            AI Drafted Public Appeal
-                        </h3>
-                        <div class="text-gray-200 text-sm whitespace-pre-line">${htmlContent}</div>
-                        <button onclick="copyToClipboard('${appealText.replace(/'/g, "\\'")}')" class="btn-secondary mt-4 py-2 px-4 rounded-lg font-bold text-sm">
-                            Copy Text to Clipboard
-                        </button>
-                    </div>
-                `;
-            } catch (error) {
-                console.error("Gemini API call failed:", error);
-                outputDiv.innerHTML = '<p class="text-red-400 p-4 rounded-lg bg-red-900/30">Failed to generate public appeal. Check console for API error details.</p>';
-            }
-        }
-        
-        window.copyToClipboard = function(text) {
-            const textarea = document.createElement('textarea');
-            textarea.value = text;
-            document.body.appendChild(textarea);
-            textarea.select();
-            document.execCommand('copy');
-            document.body.removeChild(textarea);
-
-            const appealOutput = document.getElementById('ai-appeal-output');
-            const message = document.createElement('p');
-            message.textContent = 'Copied to clipboard!';
-            message.className = 'text-green-400 text-sm mt-2';
-            appealOutput.appendChild(message);
-            setTimeout(() => appealOutput.removeChild(message), 2000);
-        }
-
-        // Simple view manager
-        function showView(viewName, data = null) {
-            // Cleanup previous listeners
-            if (unsubscribeWanted) unsubscribeWanted();
-            if (unsubscribeMissing) unsubscribeMissing();
-
-            // Clear content and show the loading spinner
-            contentDiv.innerHTML = '<div class="text-center p-12"><div class="animate-spin inline-block w-8 h-8 border-4 border-t-4 border-[#58a6ff] border-opacity-50 rounded-full"></div><p class="mt-2 text-gray-400">Loading...</p></div>';
-
-            // IMPORTANT: Now we use the isAuthReady check only as a safeguard, 
-            // as showView is primarily called by onAuthStateChanged.
-            if (!window.isAuthReady()) {
-                console.log("Auth not ready. Waiting to show view:", viewName);
-                setTimeout(() => showView(viewName, data), 100);
-                return;
-            }
-
-            // NEW: Look up the data object if we received an ID string (from card click)
-            let viewData = data;
-            if (typeof data === 'string' && (viewName.endsWith('-detail'))) {
-                viewData = window.detailCache[data];
-                if (!viewData) {
-                    contentDiv.innerHTML = '<div class="text-center p-12"><h2 class="text-3xl font-semibold text-red-500">Error: Data Not Found</h2><p class="text-gray-400">Could not retrieve details for ID: ' + data + '</p></div>';
-                    return;
-                }
-            }
-
-
-            switch (viewName) {
-                case 'wanted':
-                    renderWantedView();
-                    break;
-                case 'missing':
-                    renderMissingView();
-                    break;
-                case 'report':
-                    renderReportView();
-                    break;
-                case 'wanted-detail':
-                    renderCriminalDetail(viewData);
-                    break;
-                case 'missing-detail':
-                    renderMissingPersonDetail(viewData);
-                    break;
-                default:
-                    contentDiv.innerHTML = '<div class="text-center p-12"><h2 class="text-3xl font-semibold text-red-500">Error: View Not Found</h2></div>';
-            }
-        }
-
-        // --- 1. WANTED CRIMINAL FEATURE ---
-
-        function renderWantedView() {
-            contentDiv.innerHTML = `
-                <h2 class="text-3xl font-bold mb-6 text-gray-100">Wanted Criminals</h2>
-                <div id="wanted-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                    <!-- Cards will be injected here by the listener -->
+    function openWantedModal(item){
+      $("#modalTitle").textContent = item.name + " – Details";
+      $("#modalBody").innerHTML = `
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <img src="${item.photo_url}" class="sm:col-span-1 w-full h-40 object-cover rounded-xl"/>
+          <div class="sm:col-span-2 text-sm space-y-2">
+            <p><span class="font-medium">Crimes:</span> ${item.crimes.join(', ')}</p>
+            <p><span class="font-medium">Last seen:</span> ${item.last_seen_location} at ${fmt(item.last_seen_time)}</p>
+            <p><span class="font-medium">Reward:</span> ৳${item.reward.toLocaleString()}</p>
+            <p class="text-[color:var(--twm,theme(colors.base.mute))]">${item.note||''}</p>
+            <div class="mt-3 flex flex-wrap gap-2">
+              <button id="seenBtn" class="px-3 py-2 rounded-lg bg-[color:var(--twa,theme(colors.base.accent))] text-slate-900 text-sm font-semibold">I have seen this person</button>
+            </div>
+            <div id="seenFormWrap" class="hidden mt-4 p-4 rounded-xl bg-slate-900/60 border border-[color:var(--twb,theme(colors.base.border))]">
+              <h4 class="font-semibold mb-3">Report Last Seen (Will notify police)</h4>
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label class="block text-xs mb-1">Last Seen Time</label>
+                  <input id="seen_time" type="datetime-local" class="w-full rounded-lg px-3 py-2 bg-slate-900 border border-[color:var(--twb,theme(colors.base.border))] text-white"/>
                 </div>
-                <div id="wanted-loading" class="text-center p-6 text-gray-400">Loading wanted list...</div>
-            `;
-
-            const wantedGrid = document.getElementById('wanted-grid');
-            const wantedCollection = window.collection(window.db, window.WANTED_COLLECTION_PATH);
-
-            unsubscribeWanted = window.onSnapshot(wantedCollection, (snapshot) => {
-                const criminals = [];
-                snapshot.forEach(doc => {
-                    criminals.push({ id: doc.id, ...doc.data() });
-                });
-
-                document.getElementById('wanted-loading').style.display = 'none';
-                wantedGrid.innerHTML = criminals.map(c => createCriminalCard(c)).join('');
-            }, (error) => {
-                console.error("Error fetching wanted criminals: ", error);
-                // Display error to user
-                wantedGrid.innerHTML = `<p class="text-red-400 col-span-4 p-4 rounded-lg bg-red-900/30">Failed to load wanted criminals. Please check Firebase permissions. Error: ${error.message}</p>`;
-            });
-        }
-
-        function createCriminalCard(criminal) {
-            // FIX: Store object by ID and pass only the ID to onclick
-            window.detailCache[criminal.id] = criminal;
-            return `
-                <div class="container-card p-4 rounded-xl transform hover:scale-[1.02] transition-all duration-300 cursor-pointer" onclick="showView('wanted-detail', '${criminal.id}')">
-                    <img src="${criminal.pictureUrl}" onerror="this.onerror=null; this.src='https://placehold.co/150x200/30363d/9e9e9e?text=No+Image'" alt="${criminal.name}" class="w-full h-48 object-cover rounded-lg mb-3">
-                    <h3 class="text-lg font-semibold text-gray-100 truncate">${criminal.name}</h3>
-                    <p class="text-sm text-red-400 mt-1">Crime: ${criminal.crime.split(',')[0]}</p>
+                <div>
+                  <label class="block text-xs mb-1">Last Seen Location</label>
+                  <div class="flex gap-2">
+                    <input id="seen_location" class="flex-1 rounded-lg px-3 py-2 bg-slate-900 border border-[color:var(--twb,theme(colors.base.border))] text-white" placeholder="Type address or use my location"/>
+                    <button type="button" id="geoSeen" class="px-3 py-2 rounded-lg bg-slate-800 border border-[color:var(--twb,theme(colors.base.border))] hover:bg-slate-700"><i data-lucide="crosshair"></i></button>
+                  </div>
                 </div>
-            `;
-        }
+              </div>
+              <div class="mt-3 flex justify-end">
+                <button id="submitSeen" class="px-3 py-2 rounded-lg bg-[color:var(--twa,theme(colors.base.accent2))] text-slate-900 font-semibold">Send Notification</button>
+              </div>
+            </div>
+          </div>
+        </div>`;
+      toggleModal(true);
+      lucide.createIcons();
+      // Wire actions
+      const seenBtn = $("#seenBtn");
+      const wrap = $("#seenFormWrap");
+      seenBtn.addEventListener('click', ()=> wrap.classList.toggle('hidden'));
+      $("#geoSeen").addEventListener('click', ()=> fillWithGeo($("#seen_location")));
+      $("#submitSeen").addEventListener('click', ()=>{
+        const payload = {
+          criminal_id: item.id,
+          last_seen_time: $("#seen_time").value,
+          last_seen_location: $("#seen_location").value
+        };
+        // TODO: POST /api/wanted/seen -> notify police
+        alert(`🚓 Notification sent to police with your sighting.
 
-        function renderCriminalDetail(criminal) {
-            contentDiv.innerHTML = `
-                <div class="max-w-4xl mx-auto container-card p-6 md:p-10 rounded-xl">
-                    <button onclick="showView('wanted')" class="text-blue-400 hover:text-blue-300 mb-6 flex items-center">
-                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
-                        Back to Wanted List
-                    </button>
-                    <div class="flex flex-col md:flex-row gap-8 items-start">
-                        <img src="${criminal.pictureUrl}" onerror="this.onerror=null; this.src='https://placehold.co/300x400/30363d/9e9e9e?text=No+Image+Available'" alt="${criminal.name}" class="w-full md:w-64 h-80 object-cover rounded-lg flex-shrink-0">
-                        <div class="flex-grow">
-                            <h2 class="text-4xl font-extrabold text-red-500 mb-2">${criminal.name}</h2>
-                            <p class="text-xl font-medium text-gray-300 mb-4">${criminal.crime}</p>
-                            <div class="space-y-3">
-                                <p class="text-gray-400"><strong class="text-gray-200">Last Seen:</strong> ${criminal.lastSeen}</p>
-                                <p class="text-gray-400"><strong class="text-gray-200">Details:</strong> ${criminal.details}</p>
-                                <p class="text-gray-500 text-sm mt-6">Report any sighting immediately to local authorities. Do not approach.</p>
-                            </div>
+${JSON.stringify(payload, null, 2)}`);
+        toggleModal(false);
+      });
+    }
 
-                            <!-- LLM Feature Button -->
-                            <button onclick="window.generateCriminalProfile('${criminal.id}')" class="btn-primary mt-8 py-2 px-4 rounded-lg font-bold text-sm flex items-center">
-                                ✨ Generate Psychological Profile & Risk Assessment
-                            </button>
-                            
-                        </div>
-                    </div>
-                    <!-- LLM Output Area -->
-                    <div id="ai-profile-output" class="mt-8">
-                        <p class="text-gray-500 text-sm">Click the button above to generate a forensic profile using AI.</p>
-                    </div>
-                </div>
-            `;
-        }
+    // --- Render Missing -----------------------------------------------------
+    function missingCard(item){
+      const card = document.createElement('div');
+      card.className = "card-hover bg-[color:var(--twc,theme(colors.base.card))] rounded-2xl border border-[color:var(--twb,theme(colors.base.border))] overflow-hidden";
+      card.innerHTML = `
+        <img src="${item.photo_url}" alt="${item.name}" class="w-full h-44 object-cover"/>
+        <div class="p-4">
+          <div class="flex items-center justify-between mb-1">
+            <h3 class="font-semibold text-white">${item.name} <span class="text-[color:var(--twm,theme(colors.base.mute))] font-normal">(${item.nickname||'—'})</span></h3>
+            <span class="text-xs px-2 py-1 rounded-full ${item.still_with_finder?'bg-emerald-900/40 text-emerald-300 border border-emerald-800':'bg-amber-900/40 text-amber-300 border border-amber-800'}">${item.still_with_finder? 'With finder' : 'Unknown'}</span>
+          </div>
+          <p class="text-sm text-[color:var(--twm,theme(colors.base.mute))]">Hometown: ${item.hometown||'—'}</p>
+          <p class="text-sm text-[color:var(--twm,theme(colors.base.mute))]">Last seen: ${item.last_seen_location} · ${fmt(item.last_seen_time)}</p>
+          <div class="mt-3 flex flex-wrap gap-2 items-center">
+            <button class="details-missing px-3 py-2 rounded-lg bg-slate-800 text-white text-sm border border-[color:var(--twb,theme(colors.base.border))] hover:bg-slate-700">Show details</button>
+          </div>
+        </div>`;
+      card.querySelector('.details-missing').addEventListener('click',()=>openMissingModal(item));
+      return card;
+    }
+    function renderMissing(list){
+      const grid = $("#missingGrid");
+      grid.innerHTML = "";
+      list.forEach(item=> grid.appendChild(missingCard(item)));
+    }
 
-        // --- 2. MISSING PERSON FEATURE ---
+    function openMissingModal(item){
+      $("#modalTitle").textContent = item.name + " – Details";
+      $("#modalBody").innerHTML = `
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <img src="${item.photo_url}" class="sm:col-span-1 w-full h-40 object-cover rounded-xl"/>
+          <div class="sm:col-span-2 text-sm space-y-2">
+            <p><span class="font-medium">Nickname:</span> ${item.nickname||'—'}</p>
+            <p><span class="font-medium">Age:</span> ${item.age||'—'} | <span class="font-medium">Weight:</span> ${item.weight_kg||'—'} kg | <span class="font-medium">Hair:</span> ${item.hair_color||'—'}</p>
+            <p><span class="font-medium">Hometown:</span> ${item.hometown||'—'}</p>
+            <p><span class="font-medium">Last seen:</span> ${item.last_seen_location} at ${fmt(item.last_seen_time)}</p>
+            <p class="text-[color:var(--twm,theme(colors.base.mute))]">${item.description||''}</p>
+            <div class="mt-3 flex flex-wrap gap-2">
+              <button id="foundBtn" class="px-3 py-2 rounded-lg bg-[color:var(--twa,theme(colors.base.accent))] text-slate-900 text-sm font-semibold">Found</button>
+              <button id="toggleFinderBtn" class="px-3 py-2 rounded-lg bg-slate-800 text-white text-sm border border-[color:var(--twb,theme(colors.base.border))] hover:bg-slate-700">Still with finder</button>
+            </div>
+          </div>
+        </div>`;
+      toggleModal(true);
+      $("#foundBtn").addEventListener('click', ()=>{
+        // TODO: POST /api/missing/found -> notify police + relatives
+        alert('📣 Notification sent to police and relatives that the person has been found.');
+        toggleModal(false);
+      });
+      $("#toggleFinderBtn").addEventListener('click', ()=>{
+        item.still_with_finder = !item.still_with_finder;
+        renderMissing(missingData.filter(filterMissing));
+        // TODO: PATCH /api/missing/:id {still_with_finder}
+        toggleModal(false);
+      });
+    }
 
-        function renderMissingView() {
-            contentDiv.innerHTML = `
-                <h2 class="text-3xl font-bold mb-6 text-gray-100">Missing Persons Reports</h2>
-                <div id="missing-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                    <!-- Cards will be injected here by the listener -->
-                </div>
-                <div id="missing-loading" class="text-center p-6 text-gray-400">Loading reports...</div>
-            `;
+    // --- Modal controls -----------------------------------------------------
+    function toggleModal(show){
+      const m = $("#detailsModal");
+      if(show){ m.classList.remove('hidden'); } else { m.classList.add('hidden'); }
+      lucide.createIcons();
+    }
+    $("#closeModal").addEventListener('click', ()=>toggleModal(false));
+    $("#detailsModal").addEventListener('click', (e)=>{ if(e.target.id==='detailsModal') toggleModal(false) });
 
-            const missingGrid = document.getElementById('missing-grid');
-            const missingCollection = window.collection(window.db, window.MISSING_COLLECTION_PATH);
+    // --- Searching & refresh ------------------------------------------------
+    function filterWanted(item){
+      const q = $("#searchWanted").value.trim().toLowerCase();
+      if(!q) return true;
+      return item.name.toLowerCase().includes(q) || item.last_seen_location.toLowerCase().includes(q) || item.crimes.join(' ').toLowerCase().includes(q);
+    }
+    function filterMissing(item){
+      const q = $("#searchMissing").value.trim().toLowerCase();
+      if(!q) return true;
+      return item.name.toLowerCase().includes(q) || (item.hometown||'').toLowerCase().includes(q) || (item.nickname||'').toLowerCase().includes(q);
+    }
 
-            // Real-time listener for Missing Persons
-            unsubscribeMissing = window.onSnapshot(missingCollection, (snapshot) => {
-                const persons = [];
-                snapshot.forEach(doc => {
-                    persons.push({ id: doc.id, ...doc.data() });
-                });
+    $("#searchWanted").addEventListener('input', ()=>renderWanted(wantedData.filter(filterWanted)));
+    $("#searchMissing").addEventListener('input', ()=>renderMissing(missingData.filter(filterMissing)));
+    $("#refreshWanted").addEventListener('click', ()=>{ renderWanted(wantedData.filter(filterWanted)); });
+    $("#refreshMissing").addEventListener('click', ()=>{ renderMissing(missingData.filter(filterMissing)); });
 
-                document.getElementById('missing-loading').style.display = 'none';
-                missingGrid.innerHTML = persons.map(p => createMissingPersonCard(p)).join('');
-            }, (error) => {
-                console.error("Error fetching missing persons: ", error);
-                missingGrid.innerHTML = `<p class="text-red-400 col-span-4 p-4 rounded-lg bg-red-900/30">Failed to load missing persons data. Please check Firebase permissions. Error: ${error.message}</p>`;
-            });
-        }
+    // Geo buttons in Report form
+    $$(".geo-btn").forEach(btn=> btn.addEventListener('click', ()=>{
+      const name = btn.getAttribute('data-target');
+      const el = document.querySelector(`[name="${name}"]`);
+      if(el) fillWithGeo(el);
+    }));
 
-        function createMissingPersonCard(person) {
-            const isMissing = person.status === 'Missing';
-            const statusClass = isMissing ? 'status-missing' : 'status-found';
-            const statusText = isMissing ? 'MISSING' : 'FOUND';
+    // --- Report form submit -------------------------------------------------
+    $("#reportForm").addEventListener('submit', async (e)=>{
+      e.preventDefault();
+      const fd = new FormData(e.target);
+      const payload = Object.fromEntries(fd.entries());
+      // NOTE: photo_file is a File; send via multipart/form-data to backend
+      // TODO: await fetch('/api/reports/missing', {method:'POST', body: fd});
+      const generatedId = 'MS-' + Math.floor(100000 + Math.random()*900000);
+      $("#caseId").textContent = generatedId;
+      $("#reportSuccess").classList.remove('hidden');
+      e.target.reset();
+      window.scrollTo({top:0, behavior:'smooth'});
+    });
 
-            // FIX: Store object by ID and pass only the ID to onclick
-            window.detailCache[person.id] = person;
+    // --- Self Tests ---------------------------------------------------------
+    function runTests(){
+      const out = document.getElementById('testResults');
+      out.innerHTML = '';
+      const results = [];
+      const assert = (name, cond) => results.push({name, pass: !!cond});
 
-            return `
-                <div class="container-card p-4 rounded-xl transform hover:scale-[1.02] transition-all duration-300 cursor-pointer" onclick="showView('missing-detail', '${person.id}')">
-                    <img src="${person.pictureUrl}" onerror="this.onerror=null; this.src='https://placehold.co/150x200/30363d/9e9e9e?text=No+Image'" alt="${person.name}" class="w-full h-48 object-cover rounded-lg mb-3">
-                    <h3 class="text-lg font-semibold text-gray-100 truncate">${person.name}, ${person.age}</h3>
-                    <div class="${statusClass} text-xs font-bold px-2 py-1 rounded-full w-fit mt-1">${statusText}</div>
-                </div>
-            `;
-        }
+      try {
+        // fmt tests
+        assert('fmt(null) returns empty string', fmt(null) === '');
+        assert('fmt("") returns empty string', fmt('') === '');
+        const sampleFmt = fmt('2025-09-25T18:30:00');
+        assert('fmt(date) returns non-empty string', typeof sampleFmt === 'string' && sampleFmt.length > 0);
 
-        function renderMissingPersonDetail(person) {
-            const isMissing = person.status === 'Missing';
-            const statusClass = isMissing ? 'status-missing' : 'status-found';
-            const statusText = isMissing ? 'Still Missing' : 'Found and Safe';
+        // filterWanted tests
+        document.getElementById('searchWanted').value = 'rahim';
+        assert('filterWanted matches by name', filterWanted(wantedData[0]) === true);
+        document.getElementById('searchWanted').value = 'fraud';
+        assert('filterWanted matches by crime keyword', filterWanted(wantedData[1]) === true);
+        document.getElementById('searchWanted').value = 'no-match';
+        assert('filterWanted returns false on no match', filterWanted(wantedData[0]) === false);
 
-            contentDiv.innerHTML = `
-                <div class="max-w-4xl mx-auto container-card p-6 md:p-10 rounded-xl">
-                    <button onclick="showView('missing')" class="text-blue-400 hover:text-blue-300 mb-6 flex items-center">
-                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
-                        Back to Missing List
-                    </button>
-                    <div class="flex flex-col md:flex-row gap-8 items-start">
-                        <img src="${person.pictureUrl}" onerror="this.onerror=null; this.src='https://placehold.co/300x400/30363d/9e9e9e?text=No+Image+Available'" alt="${person.name}" class="w-full md:w-64 h-80 object-cover rounded-lg flex-shrink-0">
-                        <div class="flex-grow">
-                            <h2 class="text-4xl font-extrabold text-gray-100 mb-2">${person.name}</h2>
-                            <div class="${statusClass} text-lg font-bold px-3 py-1 rounded-full w-fit mb-4">${statusText}</div>
+        // filterMissing tests
+        document.getElementById('searchMissing').value = 'Nusrat';
+        assert('filterMissing matches by name', filterMissing(missingData[1]) === true);
+        document.getElementById('searchMissing').value = 'gazipur';
+        assert('filterMissing matches by hometown', filterMissing(missingData[0]) === true);
 
-                            <div class="grid grid-cols-2 gap-4 text-gray-400">
-                                <div><strong class="text-gray-200">Age:</strong> ${person.age}</div>
-                                <div><strong class="text-gray-200">Weight:</strong> ${person.weight} lbs</div>
-                                <div><strong class="text-gray-200">Blood Group:</strong> ${person.bloodGroup}</div>
-                                <div><strong class="text-gray-200">Hair Color:</strong> ${person.hairColor}</div>
-                            </div>
+        // openMissingModal behavior
+        document.getElementById('searchMissing').value = '';
+        renderMissing(missingData);
+        const firstMissingBtn = document.querySelector('#missingGrid .details-missing');
+        firstMissingBtn.click();
+        assert('Modal has Found button', !!document.getElementById('foundBtn'));
+        assert('Modal has Still-with-finder button', !!document.getElementById('toggleFinderBtn'));
+        document.getElementById('closeModal').click();
 
-                            <div class="mt-4 space-y-2">
-                                <p class="text-gray-400"><strong class="text-gray-200">Last Seen Location:</strong> ${person.lastSeenLocation}</p>
-                                <p class="text-gray-400"><strong class="text-gray-200">Last Seen Time:</strong> ${person.lastSeenTime}</p>
-                            </div>
+        // openWantedModal behavior
+        document.getElementById('searchWanted').value = '';
+        renderWanted(wantedData);
+        const firstCardBtn = document.querySelector('#wantedGrid .show-details');
+        firstCardBtn.click();
+        const seenBtn = document.getElementById('seenBtn');
+        assert('Show details renders seenBtn', !!seenBtn);
+        seenBtn.click();
+        const seenForm = document.getElementById('seenFormWrap');
+        assert('Clicking seenBtn reveals form', !seenForm.classList.contains('hidden'));
+        document.getElementById('closeModal').click();
 
-                            ${isMissing ? `
-                            <div class="mt-8">
-                                <!-- LLM Feature 2 Button -->
-                                <button onclick="window.draftPublicAppeal('${person.id}')" class="bg-red-600 hover:bg-red-700 text-white py-2 px-4 rounded-lg font-bold text-sm flex items-center transition duration-150">
-                                    ✨ Draft Public Appeal / Social Post
-                                </button>
-                            </div>
-                            
-                            <div class="mt-8 p-4 bg-yellow-900 bg-opacity-30 border border-yellow-700 rounded-lg">
-                                <label for="found-checkbox-${person.id}" class="flex items-center space-x-3 cursor-pointer">
-                                    <input type="checkbox" id="found-checkbox-${person.id}" class="h-6 w-6 text-green-600 rounded focus:ring-green-500" onchange="handleFoundReport('${person.id}', this.checked)">
-                                    <span class="text-lg font-semibold text-yellow-300">I have found this person and they are safe with me.</span>
-                                </label>
-                                <p id="found-message-${person.id}" class="text-sm mt-2 text-yellow-400 hidden">Thank you for reporting! Police will be notified immediately.</p>
-                            </div>
-                            ` : `<p class="mt-8 p-4 bg-green-900 bg-opacity-30 border border-green-700 rounded-lg text-lg text-green-300 font-semibold">This person has been marked as found.</p>`}
-                        </div>
-                    </div>
-                    <!-- LLM Appeal Output Area -->
-                    <div id="ai-appeal-output" class="mt-8">
-                        <p class="text-gray-500 text-sm">Click the red button above to generate a ready-to-use social media appeal.</p>
-                    </div>
-                    
-                </div>
-            `;
-        }
+      } catch (e) {
+        results.push({name: 'Tests crashed', pass: false, error: e.message});
+      }
 
-        window.handleFoundReport = async function(personId, isChecked) {
-            const messageEl = document.getElementById(`found-message-${personId}`);
-            if (isChecked) {
-                const personRef = window.doc(window.db, window.MISSING_COLLECTION_PATH, personId);
-                try {
-                    await window.updateDoc(personRef, {
-                        status: 'Found',
-                        foundTime: window.serverTimestamp(),
-                        foundByUserId: window.userId()
-                    });
-                    messageEl.textContent = "Status updated to 'Found'! Thank you for your service to the community. Returning to list...";
-                    messageEl.classList.remove('hidden');
-                    // Automatically navigate back to refresh the list status
-                    setTimeout(() => showView('missing'), 2000);
-                } catch (e) {
-                    console.error("Error updating document: ", e);
-                    messageEl.textContent = "Error reporting found status. Please try again or check the console.";
-                    messageEl.classList.remove('hidden');
-                }
-            }
-        }
+      // Render results
+      for(const r of results){
+        const li = document.createElement('li');
+        li.className = r.pass ? 'text-emerald-300' : 'text-red-300';
+        li.textContent = (r.pass ? '✔ ' : '✖ ') + r.name + (r.error ? ' — ' + r.error : '');
+        out.appendChild(li);
+      }
+    }
 
+    document.getElementById('runTests').addEventListener('click', runTests);
 
-        // --- 3. MISSING PERSON REPORT SYSTEM ---
+    // --- First render -------------------------------------------------------
+    renderWanted(wantedData);
+    renderMissing(missingData);
+    lucide.createIcons();
+  </script>
 
-        function renderReportView() {
-            contentDiv.innerHTML = `
-                <div class="max-w-3xl mx-auto container-card p-6 md:p-10 rounded-xl">
-                    <h2 class="text-3xl font-bold mb-6 text-gray-100">Report a Missing Person</h2>
-                    <form id="missing-report-form" class="space-y-4">
-                        <p class="text-sm text-yellow-400 p-3 rounded-lg bg-yellow-900 bg-opacity-30">All fields are important. A clear picture and detailed last seen information are essential for police investigation.</p>
+  <!--
+  ========================= BACKEND BLUEPRINT (MySQL) =========================
 
-                        <!-- Personal Info -->
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            ${createInputField('text', 'name', 'Full Name', 'John Doe', true)}
-                            ${createInputField('number', 'age', 'Age', 'e.g., 35', true)}
-                            ${createInputField('number', 'weight', 'Weight (lbs)', 'e.g., 150')}
-                            ${createInputField('text', 'bloodGroup', 'Blood Group (Optional)', 'A+, B-, etc.')}
-                        </div>
-                        
-                        <!-- Appearance -->
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            ${createInputField('text', 'hairColor', 'Hair Color', 'Brown, Blonde, Black', true)}
-                            ${createInputField('text', 'pictureUrl', 'Picture URL', 'https://...', true)}
-                        </div>
+  -- WANTED CRIMINALS
+  CREATE TABLE wanted_criminals (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(120) NOT NULL,
+    photo_url VARCHAR(500),
+    last_seen_location VARCHAR(200),
+    last_seen_time DATETIME,
+    reward_bdt INT DEFAULT 0,
+    note TEXT,
+    status ENUM('wanted','caught','inactive') DEFAULT 'wanted'
+  );
 
-                        <!-- Last Seen -->
-                        ${createInputField('text', 'lastSeenLocation', 'Last Seen Location', 'Street address or landmark', true)}
-                        ${createInputField('datetime-local', 'lastSeenTime', 'Last Seen Date/Time', '', true)}
+  CREATE TABLE criminal_offenses (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    criminal_id INT NOT NULL,
+    offense VARCHAR(200) NOT NULL,
+    FOREIGN KEY (criminal_id) REFERENCES wanted_criminals(id) ON DELETE CASCADE
+  );
 
-                        <button type="submit" class="btn-primary w-full py-3 rounded-lg font-bold text-lg mt-6">
-                            Submit Report
-                        </button>
-                        <p id="report-message" class="mt-4 text-center"></p>
-                    </form>
-                </div>
-            `;
-            document.getElementById('missing-report-form').onsubmit = submitMissingReport;
-        }
+  -- MISSING PERSONS
+  CREATE TABLE missing_persons (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(120) NOT NULL,
+    nickname VARCHAR(120),
+    hometown VARCHAR(120),
+    age INT,
+    weight_kg DECIMAL(5,2),
+    hair_color VARCHAR(60),
+    photo_url VARCHAR(500),
+    last_seen_location VARCHAR(200),
+    last_seen_time DATETIME,
+    description TEXT,
+    still_with_finder TINYINT(1) DEFAULT 0,
+    status ENUM('open','found','closed') DEFAULT 'open'
+  );
 
-        function createInputField(type, id, label, placeholder, required = false) {
-            return `
-                <div class="flex flex-col">
-                    <label for="${id}" class="text-sm font-medium mb-1 text-gray-300">${label} ${required ? '<span class="text-red-500">*</span>' : ''}</label>
-                    <input type="${type}" id="${id}" name="${id}" placeholder="${placeholder}" ${required ? 'required' : ''}
-                        class="px-3 py-2 rounded-lg bg-[#0d1117] border border-[#30363d] text-gray-100 focus:outline-none focus:ring-2 focus:ring-[#58a6ff]">
-                </div>
-            `;
-        }
+  -- REPORTS TO POLICE (MISSING) — updated for relation + photo upload
+  CREATE TABLE missing_reports (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    person_name VARCHAR(120) NOT NULL,
+    nickname VARCHAR(120),
+    hometown VARCHAR(120),
+    age INT,
+    weight_kg DECIMAL(5,2),
+    hair_color VARCHAR(60),
+    photo_path VARCHAR(500), -- store path after upload (recommended)
+    last_seen_location VARCHAR(200),
+    last_seen_time DATETIME,
+    description TEXT,
+    reporter_name VARCHAR(120) NOT NULL,
+    reporter_phone VARCHAR(40) NOT NULL,
+    reporter_email VARCHAR(120),
+    reporter_relation VARCHAR(60),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+  );
 
-        window.submitMissingReport = async function(event) {
-            event.preventDefault();
-            const form = event.target;
-            const messageEl = document.getElementById('report-message');
-            messageEl.textContent = 'Submitting report...';
-            messageEl.className = 'mt-4 text-center text-blue-400';
+  -- Minimal REST endpoints (Node/Express, Flask, or PHP)
+  GET    /api/wanted                 -> list wanted criminals (JOIN offenses)
+  GET    /api/wanted/:id            -> single criminal + offenses
+  POST   /api/wanted/seen           -> {criminal_id, last_seen_time, last_seen_location}  (notify police)
 
-            const formData = {
-                name: form.name.value,
-                age: parseInt(form.age.value),
-                weight: parseInt(form.weight.value) || null,
-                bloodGroup: form.bloodGroup.value || 'Unknown',
-                hairColor: form.hairColor.value,
-                pictureUrl: form.pictureUrl.value,
-                lastSeenLocation: form.lastSeenLocation.value,
-                lastSeenTime: form.lastSeenTime.value.replace('T', ' '), // Format datetime nicely
-                status: 'Missing',
-                reportUserId: window.userId(),
-                timestamp: window.serverTimestamp()
-            };
+  GET    /api/missing               -> list missing persons
+  PATCH  /api/missing/:id           -> update still_with_finder
+  POST   /api/missing/found         -> {person_id}  (notify police & relatives)
 
-            try {
-                const docRef = await window.addDoc(window.collection(window.db, window.MISSING_COLLECTION_PATH), formData);
-                messageEl.textContent = 'Report successfully submitted to the police database!';
-                messageEl.className = 'mt-4 text-center text-green-400 font-bold';
-                form.reset();
-                // Optionally navigate to the missing persons view to see the new entry
-                setTimeout(() => showView('missing'), 2000); 
+  POST   /api/reports/missing       -> multipart/form-data (photo_file + fields); store file, save photo_path
 
-            } catch (e) {
-                console.error("Error adding document: ", e);
-                messageEl.textContent = 'Error: Could not submit the report. Please try again.';
-                messageEl.className = 'mt-4 text-center text-red-400 font-bold';
-            }
-        }
+  Example SQL:
+  SELECT w.*, GROUP_CONCAT(o.offense SEPARATOR ',') AS offenses
+  FROM wanted_criminals w LEFT JOIN criminal_offenses o ON o.criminal_id=w.id
+  GROUP BY w.id;
 
-        // Initialize the app state on load - Removed redundant onload function
-    </script>
+  UPDATE missing_persons SET still_with_finder=? WHERE id=?;
+
+  INSERT INTO missing_reports (...columns...) VALUES (...values...);
+  ==========================================================================
+  -->
 </body>
 </html>

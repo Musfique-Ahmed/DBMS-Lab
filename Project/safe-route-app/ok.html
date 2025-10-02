@@ -1,314 +1,451 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="light">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Crime DBMS – Wanted & Missing Dashboard</title>
+  <title>My Safety – Crime & Safety Dashboards</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <script>
-    tailwind.config = {
-      theme: {
-        extend: {
-          colors: {
-            primary: '#0ea5e9',
-            dark: '#0b1220',
-            card: '#0f172a',
-            accent: '#22d3ee'
-          }
-        }
-      }
-    }
-  </script>
+  <script src="https://unpkg.com/lucide@latest"></script>
   <style>
-    /* Flip card animation */
-    .flip-card { perspective: 1000px; }
-    .flip-inner { transition: transform 0.6s; transform-style: preserve-3d; }
-    .flip-card:hover .flip-inner, .flip-card:focus-within .flip-inner { transform: rotateY(180deg); }
-    .flip-front, .flip-back { backface-visibility: hidden; -webkit-backface-visibility: hidden; }
-    .flip-back { transform: rotateY(180deg); }
-
-    /* Compact scrollbar for grids */
-    .thin-scrollbar::-webkit-scrollbar { height: 6px; width: 6px; }
-    .thin-scrollbar::-webkit-scrollbar-thumb { background: #334155; border-radius: 6px; }
-    .thin-scrollbar { scrollbar-width: thin; }
+    .card-hover{transition:transform .2s ease, box-shadow .2s ease}
+    .card-hover:hover{transform:translateY(-2px);box-shadow:0 10px 25px rgba(0,0,0,.08)}
+    .backdrop{backdrop-filter: blur(6px)}
+    .flip{perspective:1000px}
+    .flip-inner{transition: transform .6s; transform-style:preserve-3d}
+    .flip.flipped .flip-inner{transform: rotateY(180deg)}
+    .flip-face{backface-visibility:hidden}
+    .flip-back{transform: rotateY(180deg)}
+    input[type="checkbox"]{accent-color:#16a34a}
   </style>
 </head>
-<body class="bg-dark text-white min-h-screen">
-  <!-- Topbar -->
-  <header class="sticky top-0 z-40 border-b border-white/10 bg-dark/80 backdrop-blur">
-    <div class="max-w-7xl mx-auto px-4 py-4 flex items-center gap-4">
+<body class="min-h-screen bg-slate-50 text-slate-900">
+  <!-- Header -->
+  <header class="sticky top-0 z-30 bg-white/80 backdrop shadow-sm">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between">
       <div class="flex items-center gap-3">
-        <div class="w-9 h-9 rounded-xl bg-primary/20 grid place-items-center">🚔</div>
-        <h1 class="text-lg font-semibold tracking-tight">Crime DBMS — Wanted & Missing Dashboard</h1>
+        <div class="w-9 h-9 rounded-xl bg-emerald-500 grid place-items-center text-white font-bold">MS</div>
+        <h1 class="text-xl font-semibold">My Safety · Crime & Safety Suite</h1>
       </div>
-      <nav class="ml-auto flex gap-2">
-        <button data-tab="wanted" class="tab-btn px-4 py-2 rounded-xl bg-primary/20 hover:bg-primary/30">Wanted</button>
-        <button data-tab="missing" class="tab-btn px-4 py-2 rounded-xl hover:bg-white/10">Missing Persons</button>
-        <button data-tab="report" class="tab-btn px-4 py-2 rounded-xl hover:bg-white/10">Report Missing</button>
+      <nav class="hidden sm:flex gap-1">
+        <button data-tab="wanted" class="tab-btn px-3 py-2 rounded-lg text-sm font-medium hover:bg-slate-100">Wanted</button>
+        <button data-tab="missing" class="tab-btn px-3 py-2 rounded-lg text-sm font-medium hover:bg-slate-100">Missing Persons</button>
+        <button data-tab="report" class="tab-btn px-3 py-2 rounded-lg text-sm font-medium hover:bg-slate-100">Report to Police</button>
       </nav>
     </div>
   </header>
 
-  <main class="max-w-7xl mx-auto px-4 py-8 space-y-8">
-    <!-- Filters -->
-    <section id="filters" class="grid gap-4 md:grid-cols-3">
-      <div class="col-span-2 flex items-center gap-3">
-        <input id="searchInput" type="text" placeholder="Search name, alias, location…" class="w-full bg-card/80 border border-white/10 rounded-xl px-4 py-2 outline-none focus:ring-2 focus:ring-primary" />
-        <select id="severityFilter" class="bg-card/80 border border-white/10 rounded-xl px-3 py-2 outline-none focus:ring-2 focus:ring-primary">
-          <option value="">All Severities</option>
-          <option>Low</option>
-          <option>Medium</option>
-          <option>High</option>
-          <option>Critical</option>
-        </select>
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 py-8">
+    <!-- Tabs for mobile -->
+    <div class="sm:hidden mb-6">
+      <select id="tabSelect" class="w-full border rounded-lg px-3 py-2">
+        <option value="wanted">Wanted Criminals</option>
+        <option value="missing">Missing Persons</option>
+        <option value="report">Report Missing to Police</option>
+      </select>
+    </div>
+
+    <!-- WANTED DASHBOARD -->
+    <section id="tab-wanted" class="tab">
+      <div class="flex items-center justify-between mb-4">
+        <h2 class="text-2xl font-semibold">Wanted Criminals</h2>
+        <div class="flex gap-2">
+          <input id="searchWanted" placeholder="Search name, crime, area…" class="w-64 max-w-[60vw] border rounded-lg px-3 py-2 text-sm"/>
+          <button id="refreshWanted" class="px-3 py-2 text-sm rounded-lg bg-slate-900 text-white hover:bg-slate-800">Refresh</button>
+        </div>
       </div>
-      <div class="text-right">
-        <button id="refreshBtn" class="px-4 py-2 rounded-xl bg-primary hover:bg-sky-500">Refresh</button>
-      </div>
+
+      <div id="wantedGrid" class="grid sm:grid-cols-2 lg:grid-cols-3 gap-5"></div>
     </section>
 
-    <!-- Wanted Criminals Grid (Flip Cards) -->
-    <section id="tab-wanted" class="tab hidden">
-      <h2 class="text-2xl font-semibold mb-4">Wanted Criminals</h2>
-      <div id="wantedGrid" class="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 thin-scrollbar"></div>
-    </section>
-
-    <!-- Missing Persons List -->
+    <!-- MISSING PERSONS DASHBOARD -->
     <section id="tab-missing" class="tab hidden">
-      <h2 class="text-2xl font-semibold mb-4">Missing Persons</h2>
-      <div class="bg-card/50 border border-white/10 rounded-2xl overflow-hidden">
-        <table class="w-full text-sm">
-          <thead class="bg-white/5">
-            <tr>
-              <th class="text-left p-3">Photo</th>
-              <th class="text-left p-3">Name</th>
-              <th class="text-left p-3">Age</th>
-              <th class="text-left p-3">Last Seen</th>
-              <th class="text-left p-3">Location</th>
-              <th class="text-left p-3">Status</th>
-              <th class="text-left p-3">Action</th>
-            </tr>
-          </thead>
-          <tbody id="missingTable"></tbody>
-        </table>
+      <div class="flex items-center justify-between mb-4">
+        <h2 class="text-2xl font-semibold">Missing Persons</h2>
+        <div class="flex gap-2">
+          <input id="searchMissing" placeholder="Search name, hometown…" class="w-64 max-w-[60vw] border rounded-lg px-3 py-2 text-sm"/>
+          <button id="refreshMissing" class="px-3 py-2 text-sm rounded-lg bg-slate-900 text-white hover:bg-slate-800">Refresh</button>
+        </div>
       </div>
+
+      <div id="missingGrid" class="grid sm:grid-cols-2 lg:grid-cols-3 gap-5"></div>
     </section>
 
-    <!-- Report Missing Person Form -->
+    <!-- REPORT MISSING TO POLICE -->
     <section id="tab-report" class="tab hidden">
-      <h2 class="text-2xl font-semibold mb-4">Report a Missing Person</h2>
-      <form id="reportForm" class="grid gap-4 md:grid-cols-2 bg-card/50 border border-white/10 p-6 rounded-2xl">
-        <div>
-          <label class="block text-sm mb-1">Full Name</label>
-          <input name="full_name" required class="w-full bg-card/80 border border-white/10 rounded-xl px-3 py-2 focus:ring-2 focus:ring-primary" />
-        </div>
-        <div>
-          <label class="block text-sm mb-1">Age</label>
-          <input name="age" type="number" min="0" required class="w-full bg-card/80 border border-white/10 rounded-xl px-3 py-2 focus:ring-2 focus:ring-primary" />
-        </div>
+      <h2 class="text-2xl font-semibold mb-4">Report Missing to Police</h2>
+      <p class="text-slate-600 mb-6">Fill in the details. The report will be forwarded to the nearest police station and a case ID will be generated.</p>
+
+      <form id="reportForm" class="bg-white rounded-2xl shadow p-6 grid grid-cols-1 md:grid-cols-2 gap-4">
+        <!-- Person details -->
         <div class="md:col-span-2">
-          <label class="block text-sm mb-1">Last Seen Location</label>
-          <input name="last_seen_location" required class="w-full bg-card/80 border border-white/10 rounded-xl px-3 py-2 focus:ring-2 focus:ring-primary" />
+          <h3 class="font-semibold text-lg mb-2">Person Details</h3>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label class="block text-sm font-medium mb-1">Full Name</label>
+              <input name="full_name" required class="w-full border rounded-lg px-3 py-2" />
+            </div>
+            <div>
+              <label class="block text-sm font-medium mb-1">Nickname</label>
+              <input name="nickname" class="w-full border rounded-lg px-3 py-2" />
+            </div>
+            <div>
+              <label class="block text-sm font-medium mb-1">Hometown</label>
+              <input name="hometown" class="w-full border rounded-lg px-3 py-2" />
+            </div>
+            <div>
+              <label class="block text-sm font-medium mb-1">Age</label>
+              <input name="age" type="number" min="0" class="w-full border rounded-lg px-3 py-2" />
+            </div>
+            <div>
+              <label class="block text-sm font-medium mb-1">Weight (kg)</label>
+              <input name="weight_kg" type="number" min="0" step="0.1" class="w-full border rounded-lg px-3 py-2" />
+            </div>
+            <div>
+              <label class="block text-sm font-medium mb-1">Hair Color</label>
+              <input name="hair_color" class="w-full border rounded-lg px-3 py-2" />
+            </div>
+            <div class="sm:col-span-2">
+              <label class="block text-sm font-medium mb-1">Photo URL</label>
+              <input name="photo_url" placeholder="https://…" class="w-full border rounded-lg px-3 py-2" />
+            </div>
+          </div>
         </div>
+
+        <!-- Last seen -->
         <div class="md:col-span-2">
-          <label class="block text-sm mb-1">Last Seen Date & Time</label>
-          <input name="last_seen_time" type="datetime-local" required class="w-full bg-card/80 border border-white/10 rounded-xl px-3 py-2 focus:ring-2 focus:ring-primary" />
+          <h3 class="font-semibold text-lg mb-2">Last Seen</h3>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label class="block text-sm font-medium mb-1">Time & Date</label>
+              <input name="last_seen_time" type="datetime-local" class="w-full border rounded-lg px-3 py-2" />
+            </div>
+            <div>
+              <label class="block text-sm font-medium mb-1">Location</label>
+              <input name="last_seen_location" class="w-full border rounded-lg px-3 py-2" />
+            </div>
+          </div>
         </div>
+
+        <!-- Description -->
         <div class="md:col-span-2">
-          <label class="block text-sm mb-1">Description (clothes, marks, context)</label>
-          <textarea name="description" rows="3" class="w-full bg-card/80 border border-white/10 rounded-xl px-3 py-2 focus:ring-2 focus:ring-primary"></textarea>
+          <label class="block text-sm font-medium mb-1">Description (height, blood group, clothing, marks, etc.)</label>
+          <textarea name="description" rows="5" class="w-full border rounded-lg px-3 py-2" placeholder="Add height, blood group, clothing, birthmarks/scars, medical attention if needed, etc."></textarea>
         </div>
-        <div>
-          <label class="block text-sm mb-1">Reporter Name</label>
-          <input name="reporter_name" required class="w-full bg-card/80 border border-white/10 rounded-xl px-3 py-2 focus:ring-2 focus:ring-primary" />
-        </div>
-        <div>
-          <label class="block text-sm mb-1">Reporter Contact</label>
-          <input name="reporter_contact" required class="w-full bg-card/80 border border-white/10 rounded-xl px-3 py-2 focus:ring-2 focus:ring-primary" />
-        </div>
+
+        <!-- Reporter -->
         <div class="md:col-span-2">
-          <label class="block text-sm mb-1">Upload Recent Photo</label>
-          <input name="photo" type="file" accept="image/*" class="w-full bg-card/80 border border-white/10 rounded-xl px-3 py-2" />
+          <h3 class="font-semibold text-lg mb-2">Reporter Contact</h3>
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div>
+              <label class="block text-sm font-medium mb-1">Your Name</label>
+              <input name="reporter_name" required class="w-full border rounded-lg px-3 py-2" />
+            </div>
+            <div>
+              <label class="block text-sm font-medium mb-1">Phone</label>
+              <input name="reporter_phone" required class="w-full border rounded-lg px-3 py-2" />
+            </div>
+            <div>
+              <label class="block text-sm font-medium mb-1">Email</label>
+              <input name="reporter_email" type="email" class="w-full border rounded-lg px-3 py-2" />
+            </div>
+          </div>
         </div>
-        <div class="md:col-span-2 flex items-center gap-3">
-          <input id="consent" type="checkbox" required />
-          <label for="consent" class="text-sm">I confirm the information is accurate to my knowledge and consent to data processing.</label>
-        </div>
-        <div class="md:col-span-2 text-right">
-          <button class="px-4 py-2 rounded-xl bg-primary hover:bg-sky-500">Submit Report</button>
+
+        <div class="md:col-span-2 flex items-center justify-between">
+          <div class="text-xs text-slate-500">By submitting, you consent to share these details with law enforcement.</div>
+          <button class="px-4 py-2 rounded-lg bg-emerald-600 text-white hover:bg-emerald-700">Submit Report</button>
         </div>
       </form>
-      <p id="reportMsg" class="mt-3 text-sm text-accent hidden">Report submitted. Pending verification.</p>
+
+      <div id="reportSuccess" class="hidden mt-4 p-4 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800">✅ Report submitted successfully. Case ID: <span class="font-mono" id="caseId"></span></div>
     </section>
   </main>
 
+  <!-- Details Modal -->
+  <div id="detailsModal" class="hidden fixed inset-0 z-40">
+    <div class="absolute inset-0 bg-black/40 backdrop"></div>
+    <div class="relative z-10 max-w-2xl mx-auto mt-16 bg-white rounded-2xl shadow-xl overflow-hidden">
+      <div class="flex items-center justify-between border-b px-5 py-3">
+        <h3 id="modalTitle" class="text-lg font-semibold">Details</h3>
+        <button id="closeModal" class="p-2 hover:bg-slate-100 rounded-lg" aria-label="Close"><i data-lucide="x"></i></button>
+      </div>
+      <div id="modalBody" class="p-5"></div>
+    </div>
+  </div>
+
   <script>
-    // ---- Demo Data (replace with API calls) ----
+    // --- Mock data (replace with API calls) ----------------------------------
     const wantedData = [
-      {
-        id: 101,
-        name: 'Rahim Uddin',
-        aliases: ['R. Khan', 'Arif'],
-        crime: 'Armed Robbery',
-        severity: 'High',
-        last_known_location: 'Dhaka, Mirpur',
-        reward: 50000,
-        img: 'https://images.unsplash.com/photo-1600878459138-88d9d9b723a5?q=80&w=800&auto=format&fit=crop'
-      },
-      {
-        id: 102,
-        name: 'Shahidul Islam',
-        aliases: ['Shahid'],
-        crime: 'Fraud / Embezzlement',
-        severity: 'Medium',
-        last_known_location: 'Chattogram',
-        reward: 20000,
-        img: 'https://images.unsplash.com/photo-1547425260-76bcadfb4f2c?q=80&w=800&auto=format&fit=crop'
-      },
-      {
-        id: 103,
-        name: 'Unknown (CCTV #A12)',
-        aliases: [],
-        crime: 'Hit-and-run',
-        severity: 'Critical',
-        last_known_location: 'Khulna',
-        reward: 100000,
-        img: 'https://images.unsplash.com/photo-1544006659-f0b21884ce1d?q=80&w=800&auto=format&fit=crop'
-      }
+      {id:1, name:"Rahim Uddin", photo_url:"https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?q=80&w=600&auto=format&fit=crop", crimes:["Robbery","Extortion"], last_seen_location:"Mirpur, Dhaka", last_seen_time:"2025-09-25T18:30:00", reward:50000, note:"Considered dangerous."},
+      {id:2, name:"Tariq Hasan", photo_url:"https://images.unsplash.com/photo-1542202229-7d93c33f5d07?q=80&w=600&auto=format&fit=crop", crimes:["Fraud"], last_seen_location:"Agrabad, Chattogram", last_seen_time:"2025-09-20T14:10:00", reward:20000, note:"Drives a black sedan."},
+      {id:3, name:"Unknown Alias 'Blue'", photo_url:"https://images.unsplash.com/photo-1488426862026-3ee34a7d66df?q=80&w=600&auto=format&fit=crop", crimes:["Burglary"], last_seen_location:"Uttara, Dhaka", last_seen_time:"2025-09-28T05:45:00", reward:0, note:"Seen near construction sites."}
     ];
 
     const missingData = [
-      {
-        id: 501,
-        name: 'Nusrat Jahan',
-        age: 22,
-        last_seen_time: '2025-09-25T18:30',
-        last_seen_location: 'Uttara Sector 11, Dhaka',
-        status: 'Open',
-        img: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?q=80&w=800&auto=format&fit=crop'
-      },
-      {
-        id: 502,
-        name: 'Masud Parvez',
-        age: 29,
-        last_seen_time: '2025-09-20T21:10',
-        last_seen_location: 'Rajshahi New Market',
-        status: 'Open',
-        img: 'https://images.unsplash.com/photo-1544723795-3fb6469f5b39?q=80&w=800&auto=format&fit=crop'
-      }
+      {id:11, name:"Shahin Alam", nickname:"Shuvo", photo_url:"https://images.unsplash.com/photo-1500648767791-00dcc994a43e?q=80&w=600&auto=format&fit=crop", hometown:"Gazipur", age:16, weight_kg:52, hair_color:"Black", last_seen_time:"2025-09-30T19:00:00", last_seen_location:"Jatrabari, Dhaka", description:"Wearing blue t-shirt, white sneakers.", still_with_finder:false},
+      {id:12, name:"Nusrat Jahan", nickname:"Nusa", photo_url:"https://images.unsplash.com/photo-1524504388940-b1c1722653e1?q=80&w=600&auto=format&fit=crop", hometown:"Narayanganj", age:8, weight_kg:24, hair_color:"Brown", last_seen_time:"2025-09-29T17:30:00", last_seen_location:"Motijheel, Dhaka", description:"Pink frock, cartoon backpack.", still_with_finder:true}
     ];
 
-    // ---- Renderers ----
-    function renderWanted(list) {
-      const grid = document.getElementById('wantedGrid');
-      grid.innerHTML = '';
-      list.forEach((p) => {
-        const card = document.createElement('div');
-        card.className = 'flip-card';
+    // --- Utilities -----------------------------------------------------------
+    const $$ = (sel, root=document) => Array.from(root.querySelectorAll(sel));
+    const $  = (sel, root=document) => root.querySelector(sel);
+    const fmt = (dt) => dt ? new Date(dt).toLocaleString() : "";
+
+    // --- Tabs ---------------------------------------------------------------
+    function setActiveTab(id){
+      $$(".tab").forEach(s=>s.classList.add("hidden"));
+      $("#tab-"+id).classList.remove("hidden");
+      $$(".tab-btn").forEach(b=>b.classList.toggle("bg-slate-900", b.dataset.tab===id));
+      $$(".tab-btn").forEach(b=>b.classList.toggle("text-white", b.dataset.tab===id));
+    }
+    $$(".tab-btn").forEach(btn=>btn.addEventListener("click",()=>{ setActiveTab(btn.dataset.tab) }));
+    $("#tabSelect").addEventListener("change", e=> setActiveTab(e.target.value));
+    setActiveTab("wanted");
+
+    // --- Render Wanted ------------------------------------------------------
+    function renderWanted(list){
+      const grid = $("#wantedGrid");
+      grid.innerHTML = "";
+      list.forEach(item=>{
+        const card = document.createElement("div");
+        card.className = "card-hover bg-white rounded-2xl shadow overflow-hidden";
         card.innerHTML = `
-          <div class="flip-inner relative h-80 rounded-2xl overflow-hidden border border-white/10 bg-card">
-            <div class="flip-front absolute inset-0">
-              <img src="${p.img}" alt="${p.name}" class="h-48 w-full object-cover"/>
-              <div class="p-4 space-y-2">
-                <div class="text-lg font-semibold">${p.name}</div>
-                <div class="text-xs text-white/70">${p.crime}</div>
-                <div class="flex items-center justify-between text-xs">
-                  <span class="px-2 py-0.5 rounded bg-white/5 border border-white/10">${p.severity}</span>
-                  <span class="text-white/70">${p.last_known_location}</span>
+          <div class="flip">
+            <div class="flip-inner">
+              <div class="flip-face p-0">
+                <img src="${item.photo_url}" alt="${item.name}" class="w-full h-44 object-cover"/>
+                <div class="p-4">
+                  <div class="flex items-center justify-between mb-1">
+                    <h3 class="font-semibold">${item.name}</h3>
+                    <span class="text-xs px-2 py-1 rounded-full bg-red-50 text-red-700 border border-red-200">Wanted</span>
+                  </div>
+                  <p class="text-sm text-slate-600">Last seen: ${item.last_seen_location} · ${fmt(item.last_seen_time)}</p>
+                  <div class="flex gap-2 mt-3">
+                    <button class="show-details px-3 py-2 rounded-lg bg-slate-900 text-white text-sm">Show details</button>
+                    <button class="flip-btn px-3 py-2 rounded-lg border text-sm">Flip</button>
+                  </div>
+                </div>
+              </div>
+              <div class="flip-face flip-back p-4 absolute inset-0 bg-white">
+                <h4 class="font-semibold mb-2">Crimes</h4>
+                <ul class="list-disc list-inside text-sm text-slate-700">${item.crimes.map(c=>`<li>${c}</li>`).join("")}</ul>
+                <p class="mt-3 text-sm text-slate-600">Reward: <span class="font-medium">৳${item.reward.toLocaleString()}</span></p>
+                <div class="mt-4 flex gap-2">
+                  <button class="show-details px-3 py-2 rounded-lg bg-slate-900 text-white text-sm">Show details</button>
+                  <button class="flip-btn px-3 py-2 rounded-lg border text-sm">Flip back</button>
                 </div>
               </div>
             </div>
-            <div class="flip-back absolute inset-0 p-4 bg-card/90">
-              <div class="text-sm space-y-2">
-                <div><span class="text-white/60">Aliases:</span> ${p.aliases.length ? p.aliases.join(', ') : 'N/A'}</div>
-                <div><span class="text-white/60">Reward:</span> ৳${p.reward?.toLocaleString?.('en-BD') ?? '—'}</div>
-                <div><span class="text-white/60">Last Known:</span> ${p.last_known_location}</div>
-                <div class="pt-2 flex gap-2">
-                  <button class="px-3 py-1.5 rounded-lg bg-primary/20 hover:bg-primary/30 text-sm">Details</button>
-                  <button class="px-3 py-1.5 rounded-lg bg-accent/20 hover:bg-accent/30 text-sm">Report Sighting</button>
-                </div>
-              </div>
-            </div>
-          </div>
-        `;
+          </div>`;
+        // event wiring
+        card.querySelectorAll('.show-details').forEach(btn=>btn.addEventListener('click',()=>openWantedModal(item)));
+        card.querySelectorAll('.flip-btn').forEach(btn=>btn.addEventListener('click',()=>{
+          card.querySelector('.flip').classList.toggle('flipped');
+        }));
         grid.appendChild(card);
       });
     }
 
-    function renderMissing(list) {
-      const tbody = document.getElementById('missingTable');
-      tbody.innerHTML = '';
-      list.forEach((m) => {
-        const tr = document.createElement('tr');
-        tr.className = 'border-t border-white/10';
-        tr.innerHTML = `
-          <td class="p-3"><img src="${m.img}" alt="${m.name}" class="w-14 h-14 rounded-lg object-cover" /></td>
-          <td class="p-3 font-medium">${m.name}</td>
-          <td class="p-3">${m.age}</td>
-          <td class="p-3 text-white/80">${new Date(m.last_seen_time).toLocaleString()}</td>
-          <td class="p-3">${m.last_seen_location}</td>
-          <td class="p-3"><span class="px-2 py-0.5 rounded bg-white/5 border border-white/10">${m.status}</span></td>
-          <td class="p-3">
-            <button class="px-3 py-1.5 rounded-lg bg-primary/20 hover:bg-primary/30 text-sm">View</button>
-          </td>
-        `;
-        tbody.appendChild(tr);
+    function openWantedModal(item){
+      $("#modalTitle").textContent = item.name + " – Details";
+      $("#modalBody").innerHTML = `
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <img src="${item.photo_url}" class="sm:col-span-1 w-full h-40 object-cover rounded-xl"/>
+          <div class="sm:col-span-2 text-sm">
+            <p><span class="font-medium">Crimes:</span> ${item.crimes.join(', ')}</p>
+            <p><span class="font-medium">Last seen:</span> ${item.last_seen_location} at ${fmt(item.last_seen_time)}</p>
+            <p><span class="font-medium">Reward:</span> ৳${item.reward.toLocaleString()}</p>
+            <p class="mt-2 text-slate-600">${item.note||''}</p>
+          </div>
+        </div>`;
+      toggleModal(true);
+    }
+
+    // --- Render Missing -----------------------------------------------------
+    function renderMissing(list){
+      const grid = $("#missingGrid");
+      grid.innerHTML = "";
+      list.forEach(item=>{
+        const card = document.createElement('div');
+        card.className = "card-hover bg-white rounded-2xl shadow overflow-hidden";
+        card.innerHTML = `
+          <img src="${item.photo_url}" alt="${item.name}" class="w-full h-44 object-cover"/>
+          <div class="p-4">
+            <div class="flex items-center justify-between mb-1">
+              <h3 class="font-semibold">${item.name} <span class="text-slate-400 font-normal">(${item.nickname||'—'})</span></h3>
+              <span class="text-xs px-2 py-1 rounded-full ${item.still_with_finder?'bg-emerald-50 text-emerald-700 border border-emerald-200':'bg-amber-50 text-amber-700 border border-amber-200'}">${item.still_with_finder? 'With finder' : 'Unknown'}</span>
+            </div>
+            <p class="text-sm text-slate-600">Hometown: ${item.hometown||'—'}</p>
+            <p class="text-sm text-slate-600">Last seen: ${item.last_seen_location} · ${fmt(item.last_seen_time)}</p>
+            <div class="mt-3 flex items-center justify-between">
+              <button class="details-missing px-3 py-2 rounded-lg bg-slate-900 text-white text-sm">Show details</button>
+              <label class="flex items-center gap-2 text-sm">
+                <input type="checkbox" ${item.still_with_finder? 'checked':''} class="still-with-finder"> Still with finder?
+              </label>
+            </div>
+          </div>`;
+        card.querySelector('.details-missing').addEventListener('click',()=>openMissingModal(item));
+        card.querySelector('.still-with-finder').addEventListener('change', (e)=>{
+          item.still_with_finder = e.target.checked;
+          renderMissing(missingData.filter(filterMissing)); // refresh tags
+          // TODO: PATCH /api/missing/:id {still_with_finder}
+        });
+        grid.appendChild(card);
       });
     }
 
-    // ---- Filters ----
-    function applyFilters() {
-      const q = document.getElementById('searchInput').value.toLowerCase();
-      const sev = document.getElementById('severityFilter').value;
-      const filtered = wantedData.filter(p => {
-        const text = [p.name, ...(p.aliases||[]), p.crime, p.last_known_location].join(' ').toLowerCase();
-        const okSev = sev ? p.severity === sev : true;
-        return text.includes(q) && okSev;
-      });
-      renderWanted(filtered);
+    function openMissingModal(item){
+      $("#modalTitle").textContent = item.name + " – Details";
+      $("#modalBody").innerHTML = `
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <img src="${item.photo_url}" class="sm:col-span-1 w-full h-40 object-cover rounded-xl"/>
+          <div class="sm:col-span-2 text-sm space-y-1">
+            <p><span class="font-medium">Nickname:</span> ${item.nickname||'—'}</p>
+            <p><span class="font-medium">Age:</span> ${item.age||'—'} | <span class="font-medium">Weight:</span> ${item.weight_kg||'—'} kg | <span class="font-medium">Hair:</span> ${item.hair_color||'—'}</p>
+            <p><span class="font-medium">Hometown:</span> ${item.hometown||'—'}</p>
+            <p><span class="font-medium">Last seen:</span> ${item.last_seen_location} at ${fmt(item.last_seen_time)}</p>
+            <p class="mt-2 text-slate-600">${item.description||''}</p>
+            <div class="mt-3 flex items-center gap-2">
+              <input id="modalChk" type="checkbox" ${item.still_with_finder? 'checked':''}>
+              <label for="modalChk" class="text-sm">Still with finder?</label>
+            </div>
+          </div>
+        </div>`;
+      // Sync back when toggled in modal
+      setTimeout(()=>{
+        const chk = $("#modalChk"); if(chk){ chk.addEventListener('change', (e)=>{
+          item.still_with_finder = e.target.checked; renderMissing(missingData.filter(filterMissing));
+          // TODO: PATCH /api/missing/:id {still_with_finder}
+        })}
+      },0);
+      toggleModal(true);
     }
 
-    // ---- Tabs ----
-    const tabBtns = document.querySelectorAll('.tab-btn');
-    const tabs = {
-      wanted: document.getElementById('tab-wanted'),
-      missing: document.getElementById('tab-missing'),
-      report: document.getElementById('tab-report')
-    };
-    function showTab(key) {
-      Object.values(tabs).forEach(el => el.classList.add('hidden'));
-      tabs[key].classList.remove('hidden');
-      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('bg-primary/20'));
-      document.querySelector(`.tab-btn[data-tab="${key}"]`).classList.add('bg-primary/20');
+    // --- Modal controls -----------------------------------------------------
+    function toggleModal(show){
+      const m = $("#detailsModal");
+      if(show){ m.classList.remove('hidden'); } else { m.classList.add('hidden'); }
+      lucide.createIcons();
+    }
+    $("#closeModal").addEventListener('click', ()=>toggleModal(false));
+    $("#detailsModal").addEventListener('click', (e)=>{ if(e.target.id==='detailsModal') toggleModal(false) });
+
+    // --- Searching & refresh ------------------------------------------------
+    function filterWanted(item){
+      const q = $("#searchWanted").value.trim().toLowerCase();
+      if(!q) return true;
+      return item.name.toLowerCase().includes(q) || item.last_seen_location.toLowerCase().includes(q) || item.crimes.join(' ').toLowerCase().includes(q);
+    }
+    function filterMissing(item){
+      const q = $("#searchMissing").value.trim().toLowerCase();
+      if(!q) return true;
+      return item.name.toLowerCase().includes(q) || (item.hometown||'').toLowerCase().includes(q) || (item.nickname||'').toLowerCase().includes(q);
     }
 
-    // ---- Report Form (demo) ----
-    const reportForm = document.getElementById('reportForm');
-    reportForm?.addEventListener('submit', async (e) => {
+    $("#searchWanted").addEventListener('input', ()=>renderWanted(wantedData.filter(filterWanted)));
+    $("#searchMissing").addEventListener('input', ()=>renderMissing(missingData.filter(filterMissing)));
+    $("#refreshWanted").addEventListener('click', ()=>{
+      // TODO: fetch('/api/wanted').then(r=>r.json()).then(data=>{ wantedData = data; renderWanted(data) })
+      renderWanted(wantedData.filter(filterWanted));
+    });
+    $("#refreshMissing").addEventListener('click', ()=>{
+      // TODO: fetch('/api/missing').then(r=>r.json()).then(data=>{ missingData = data; renderMissing(data) })
+      renderMissing(missingData.filter(filterMissing));
+    });
+
+    // --- Report form submit -------------------------------------------------
+    $("#reportForm").addEventListener('submit', async (e)=>{
       e.preventDefault();
-      const fd = new FormData(reportForm);
-      // TODO: POST to backend endpoint like /api/missing_reports
-      // const res = await fetch('/api/missing_reports', { method: 'POST', body: fd });
-      // const data = await res.json();
-      console.log('Report payload (demo):', Object.fromEntries(fd.entries()));
-      document.getElementById('reportMsg').classList.remove('hidden');
-      reportForm.reset();
+      const fd = new FormData(e.target);
+      const payload = Object.fromEntries(fd.entries());
+      // TODO: await fetch('/api/reports/missing', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload)});
+      const generatedId = 'MS-' + Math.floor(100000 + Math.random()*900000);
+      $("#caseId").textContent = generatedId;
+      $("#reportSuccess").classList.remove('hidden');
+      e.target.reset();
+      window.scrollTo({top:0, behavior:'smooth'});
     });
 
-    // ---- Init ----
-    window.addEventListener('DOMContentLoaded', () => {
-      renderWanted(wantedData);
-      renderMissing(missingData);
-      showTab('wanted');
-      document.getElementById('searchInput').addEventListener('input', applyFilters);
-      document.getElementById('severityFilter').addEventListener('change', applyFilters);
-      document.getElementById('refreshBtn').addEventListener('click', () => {
-        // TODO: Re-fetch from backend endpoints then re-render
-        renderWanted(wantedData);
-        renderMissing(missingData);
-      });
-      tabBtns.forEach(btn => btn.addEventListener('click', () => showTab(btn.dataset.tab)));
-    });
+    // --- First render -------------------------------------------------------
+    renderWanted(wantedData);
+    renderMissing(missingData);
+    lucide.createIcons();
   </script>
+
+  <!--
+  ========================= BACKEND BLUEPRINT (MySQL) =========================
+
+  -- WANTED CRIMINALS
+  CREATE TABLE wanted_criminals (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(120) NOT NULL,
+    photo_url VARCHAR(500),
+    last_seen_location VARCHAR(200),
+    last_seen_time DATETIME,
+    reward_bdt INT DEFAULT 0,
+    note TEXT,
+    status ENUM('wanted','caught','inactive') DEFAULT 'wanted'
+  );
+
+  CREATE TABLE criminal_offenses (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    criminal_id INT NOT NULL,
+    offense VARCHAR(200) NOT NULL,
+    FOREIGN KEY (criminal_id) REFERENCES wanted_criminals(id) ON DELETE CASCADE
+  );
+
+  -- MISSING PERSONS
+  CREATE TABLE missing_persons (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(120) NOT NULL,
+    nickname VARCHAR(120),
+    hometown VARCHAR(120),
+    age INT,
+    weight_kg DECIMAL(5,2),
+    hair_color VARCHAR(60),
+    photo_url VARCHAR(500),
+    last_seen_location VARCHAR(200),
+    last_seen_time DATETIME,
+    description TEXT,
+    still_with_finder TINYINT(1) DEFAULT 0,
+    status ENUM('open','found','closed') DEFAULT 'open'
+  );
+
+  -- REPORTS TO POLICE (MISSING)
+  CREATE TABLE missing_reports (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    person_name VARCHAR(120) NOT NULL,
+    nickname VARCHAR(120),
+    hometown VARCHAR(120),
+    age INT,
+    weight_kg DECIMAL(5,2),
+    hair_color VARCHAR(60),
+    photo_url VARCHAR(500),
+    last_seen_location VARCHAR(200),
+    last_seen_time DATETIME,
+    description TEXT,
+    reporter_name VARCHAR(120) NOT NULL,
+    reporter_phone VARCHAR(40) NOT NULL,
+    reporter_email VARCHAR(120),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+  );
+
+  -- Minimal REST endpoints (Node/Express, Flask, or PHP)
+  GET    /api/wanted                 -> list wanted criminals (JOIN offenses)
+  GET    /api/wanted/:id            -> single criminal + offenses
+  GET    /api/missing               -> list missing persons
+  PATCH  /api/missing/:id           -> update still_with_finder
+  POST   /api/reports/missing       -> submit a missing report
+
+  Example raw SQL (PHP/MySQLi or Node mysql2):
+  SELECT w.*, GROUP_CONCAT(o.offense SEPARATOR ',') AS offenses
+  FROM wanted_criminals w LEFT JOIN criminal_offenses o ON o.criminal_id=w.id
+  GROUP BY w.id;
+
+  UPDATE missing_persons SET still_with_finder=? WHERE id=?;
+
+  INSERT INTO missing_reports (...columns...) VALUES (...values...);
+  ==========================================================================
+  -->
 </body>
 </html>

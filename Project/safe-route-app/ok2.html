@@ -1,0 +1,705 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Community Safety Portal</title>
+    <!-- Load Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Use Inter Font -->
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #0d1117; /* Dark background */
+        }
+        .container-card {
+            background-color: #161b22; /* Slightly lighter card background */
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.5), 0 2px 4px -2px rgba(0, 0, 0, 0.5);
+            border: 1px solid #30363d;
+        }
+        .status-missing { background-color: #9a3412; } /* Reddish brown */
+        .status-found { background-color: #166534; } /* Dark green */
+        .header-bg { background-color: #1f242b; }
+        .btn-primary {
+            background-color: #58a6ff;
+            color: #161b22;
+            transition: background-color 0.2s;
+        }
+        .btn-primary:hover {
+            background-color: #79c0ff;
+        }
+        .btn-secondary {
+            background-color: #30363d;
+            color: #d1d5db;
+            transition: background-color 0.2s;
+        }
+        .btn-secondary:hover {
+            background-color: #4b5563;
+        }
+    </style>
+</head>
+<body class="text-gray-200">
+
+    <div id="app" class="min-h-screen flex flex-col">
+        <!-- Header & Navigation -->
+        <header class="header-bg p-4 sticky top-0 z-10 border-b border-[#30363d]">
+            <div class="max-w-7xl mx-auto flex flex-col sm:flex-row justify-between items-center">
+                <div class="flex flex-col sm:flex-row items-center w-full sm:w-auto">
+                    <h1 class="text-2xl font-bold text-[#58a6ff] mb-2 sm:mb-0 sm:mr-6">Safety & Crime Monitor</h1>
+                    <!-- MOVED AUTH INFO HERE: This element now persists and is not cleared by view switching -->
+                    <div id="auth-info" class="text-xs text-gray-500 mb-2 sm:mb-0">Authenticating...</div>
+                </div>
+                
+                <nav class="flex space-x-2 sm:space-x-4">
+                    <button onclick="showView('wanted')" class="px-4 py-2 rounded-lg font-medium hover:bg-gray-700 transition duration-150">Wanted Criminals</button>
+                    <button onclick="showView('missing')" class="px-4 py-2 rounded-lg font-medium hover:bg-gray-700 transition duration-150">Missing Persons</button>
+                    <button onclick="showView('report')" class="btn-primary px-4 py-2 rounded-lg font-bold">Report Missing</button>
+                </nav>
+            </div>
+        </header>
+
+        <!-- Main Content Area -->
+        <main class="flex-grow p-4 md:p-8 max-w-7xl mx-auto w-full">
+            <div id="content">
+                <!-- Initial content/loading state -->
+                <div class="text-center p-12">
+                    <h2 class="text-3xl font-semibold mb-4 text-gray-100">Welcome to the Safety Portal</h2>
+                    <p class="text-gray-400">Loading application data...</p>
+                    <div class="mt-4"><div class="animate-spin inline-block w-8 h-8 border-4 border-t-4 border-[#58a6ff] border-opacity-50 rounded-full"></div></div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Firebase SDKs -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, getDoc, addDoc, setDoc, updateDoc, onSnapshot, collection, query, where, serverTimestamp, setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // Global variables provided by the environment
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
+        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const auth = getAuth(app);
+
+        // Set logging for debugging Firestore issues
+        setLogLevel('Debug');
+
+        // Firestore paths
+        const PUBLIC_PATH = `/artifacts/${appId}/public/data`;
+        const WANTED_COLLECTION_PATH = `${PUBLIC_PATH}/wanted_criminals`;
+        const MISSING_COLLECTION_PATH = `${PUBLIC_PATH}/missing_persons`;
+        
+        let userId = null;
+        let isAuthReady = false;
+
+        // --- Authentication and Initialization ---
+        async function initializeAuth() {
+            try {
+                if (initialAuthToken) {
+                    await signInWithCustomToken(auth, initialAuthToken);
+                } else {
+                    await signInAnonymously(auth);
+                }
+            } catch (error) {
+                console.error("Firebase Auth Error:", error);
+            }
+        }
+
+        onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                userId = user.uid;
+                // Safely update auth-info now that it is outside of the content div
+                document.getElementById('auth-info').textContent = `User ID: ${userId} (Authenticated)`;
+                await seedInitialData();
+            } else {
+                userId = crypto.randomUUID(); // Fallback to a random ID if not authenticated
+                document.getElementById('auth-info').textContent = `User ID: ${userId} (Anonymous)`;
+            }
+            isAuthReady = true;
+            // The view is shown ONLY when auth state is confirmed
+            showView('wanted');
+        });
+        
+        initializeAuth();
+
+        // Attach Firebase variables to the global scope for use in non-module script blocks
+        window.db = db;
+        window.auth = auth;
+        window.userId = () => userId;
+        window.isAuthReady = () => isAuthReady;
+        window.WANTED_COLLECTION_PATH = WANTED_COLLECTION_PATH;
+        window.MISSING_COLLECTION_PATH = MISSING_COLLECTION_PATH;
+        window.addDoc = addDoc;
+        window.collection = collection;
+        window.onSnapshot = onSnapshot;
+        window.doc = doc;
+        window.updateDoc = updateDoc;
+        window.serverTimestamp = serverTimestamp;
+        window.getDoc = getDoc;
+
+
+        // --- SEED MOCK DATA FUNCTION ---
+        // Insert mock data if the collections are empty for demonstration
+        async function seedInitialData() {
+            const seedDocRef = doc(db, PUBLIC_PATH, "data_seed_status");
+            const seedDocSnap = await getDoc(seedDocRef);
+
+            if (!seedDocSnap.exists() || !seedDocSnap.data().seeded) {
+                console.log("Seeding initial data...");
+
+                // Mock Wanted Criminals
+                await addDoc(collection(db, WANTED_COLLECTION_PATH), {
+                    name: "Victor 'The Shadow' Stone",
+                    crime: "Grand Theft, Extortion, Conspiracy",
+                    lastSeen: "Downtown Financial District, yesterday, 14:30",
+                    details: "Highly organized, known to carry false identification. Always wears a dark trench coat.",
+                    pictureUrl: "https://placehold.co/150x200/58a6ff/161b22?text=CRIMINAL+1",
+                    timestamp: serverTimestamp()
+                });
+
+                // Mock Missing Person (Initial Status: Missing)
+                await addDoc(collection(db, MISSING_COLLECTION_PATH), {
+                    name: "Sarah Jenkins",
+                    age: 28,
+                    weight: 130,
+                    bloodGroup: 'O+',
+                    hairColor: 'Blonde',
+                    lastSeenLocation: 'Oakwood Park, near the main fountain',
+                    lastSeenTime: '2025-09-25, 10:00 AM',
+                    pictureUrl: "https://placehold.co/150x200/79c0ff/161b22?text=MISSING+1",
+                    status: 'Missing',
+                    reportUserId: 'SYSTEM_SEED',
+                    timestamp: serverTimestamp()
+                });
+
+                // Mock Missing Person (Initial Status: Found)
+                await addDoc(collection(db, MISSING_COLLECTION_PATH), {
+                    name: "Michael Chen",
+                    age: 16,
+                    weight: 110,
+                    bloodGroup: 'A-',
+                    hairColor: 'Black',
+                    lastSeenLocation: 'High School Library',
+                    lastSeenTime: '2025-09-22, 3:00 PM',
+                    pictureUrl: "https://placehold.co/150x200/58a6ff/161b22?text=FOUND+1",
+                    status: 'Found',
+                    reportUserId: 'SYSTEM_SEED',
+                    timestamp: serverTimestamp()
+                });
+
+                await setDoc(seedDocRef, { seeded: true });
+                console.log("Data seeding complete.");
+            }
+        }
+    </script>
+
+    <!-- Application Logic (Non-module script block) -->
+    <script>
+        let unsubscribeWanted = null;
+        let unsubscribeMissing = null;
+        const contentDiv = document.getElementById('content');
+        // Store full document data temporarily to safely navigate to detail views
+        window.detailCache = {}; 
+
+        // --- LLM API Integration (Gemini) ---
+        const API_KEY = ""; // Provided by the Canvas environment
+        const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${API_KEY}`;
+
+        // Helper for exponential backoff during API calls
+        async function callGeminiApi(prompt, systemInstruction, maxRetries = 5) {
+            const payload = {
+                contents: [{ parts: [{ text: prompt }] }],
+                systemInstruction: { parts: [{ text: systemInstruction }] },
+            };
+
+            for (let i = 0; i < maxRetries; i++) {
+                try {
+                    const response = await fetch(API_URL, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+
+                    if (response.status === 429) {
+                        // Rate limit hit, wait longer
+                        const delay = Math.pow(2, i) * 1000 + Math.random() * 1000;
+                        console.warn(`Rate limit hit (429). Retrying in ${Math.round(delay / 1000)}s...`);
+                        await new Promise(resolve => setTimeout(resolve, delay));
+                        continue;
+                    }
+
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! Status: ${response.status}`);
+                    }
+
+                    const result = await response.json();
+                    const text = result.candidates?.[0]?.content?.parts?.[0]?.text;
+                    
+                    if (text) {
+                        return text;
+                    } else {
+                        throw new Error("Gemini API response was valid, but contained no generated text.");
+                    }
+
+                } catch (error) {
+                    console.error(`Attempt ${i + 1} failed:`, error.message);
+                    if (i === maxRetries - 1) throw error;
+
+                    const delay = Math.pow(2, i) * 1000 + Math.random() * 1000;
+                    await new Promise(resolve => setTimeout(resolve, delay));
+                }
+            }
+        }
+
+        // --- LLM Feature 1: Wanted Criminal Profile ---
+        window.generateCriminalProfile = async function(criminalId) {
+            const outputDiv = document.getElementById('ai-profile-output');
+            outputDiv.innerHTML = '<div class="text-center p-4"><div class="animate-spin inline-block w-6 h-6 border-4 border-t-4 border-[#58a6ff] border-opacity-50 rounded-full"></div><p class="mt-2 text-[#58a6ff]">Generating detailed profile...</p></div>';
+
+            const criminal = window.detailCache[criminalId];
+            if (!criminal) {
+                outputDiv.innerHTML = '<p class="text-red-400">Error: Criminal data not found in cache.</p>';
+                return;
+            }
+
+            const systemInstruction = `You are a highly experienced and fictional forensic criminal profiler. Your task is to analyze the provided case file details and generate a concise, yet detailed, psychological profile and risk assessment for law enforcement. The profile should be divided into two main sections: 'Psychological Profile' and 'Risk Assessment & Likely Actions'. Use markdown formatting for readability, including bolding for emphasis and headers. Do not state that the profile is fictional, present it as factual analysis.`;
+            
+            const userQuery = `Analyze the following wanted criminal profile to generate a detailed forensic analysis:
+Name: ${criminal.name}
+Primary Crime: ${criminal.crime}
+Last Known Sighting/Activity: ${criminal.lastSeen}
+Behavioral Details: ${criminal.details}
+Generate the profile now.`;
+
+            try {
+                const profileText = await callGeminiApi(userQuery, systemInstruction);
+                
+                // Simple markdown to HTML conversion for rendering the LLM output
+                const htmlContent = profileText
+                    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') 
+                    .replace(/## (.*)/g, '<h4 class="text-xl font-bold mt-4 mb-2 text-gray-100">$1</h4>')
+                    .replace(/\n/g, '<br>');
+
+                outputDiv.innerHTML = `
+                    <div class="p-6 mt-6 rounded-xl border border-blue-600 bg-blue-900/20">
+                        <h3 class="text-2xl font-semibold mb-4 text-blue-300 flex items-center">
+                            <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19V6l12-3v13.5m-6 0v2.5m-6 0v2.5"></path></svg>
+                            AI Criminal Profile & Assessment
+                        </h3>
+                        <div class="text-gray-200 text-sm">${htmlContent}</div>
+                    </div>
+                `;
+            } catch (error) {
+                console.error("Gemini API call failed:", error);
+                outputDiv.innerHTML = '<p class="text-red-400 p-4 rounded-lg bg-red-900/30">Failed to generate profile. Check console for API error details.</p>';
+            }
+        }
+        
+        // --- LLM Feature 2: Missing Person Public Appeal ---
+        window.draftPublicAppeal = async function(personId) {
+            const outputDiv = document.getElementById('ai-appeal-output');
+            outputDiv.innerHTML = '<div class="text-center p-4"><div class="animate-spin inline-block w-6 h-6 border-4 border-t-4 border-red-400 border-opacity-50 rounded-full"></div><p class="mt-2 text-red-400">Drafting urgent public appeal...</p></div>';
+
+            const person = window.detailCache[personId];
+            if (!person) {
+                outputDiv.innerHTML = '<p class="text-red-400">Error: Missing person data not found in cache.</p>';
+                return;
+            }
+
+            const systemInstruction = `You are a communications specialist drafting an urgent public appeal for a missing person. Your output must be a compassionate, urgent, and highly shareable social media post designed to maximize community engagement and leads. Structure the post clearly with an urgent header, key facts (including name, age, last seen location, and last seen time), a call to action, and relevant hashtags. Use a sympathetic and professional tone. The output must be ready-to-copy text in plain text format.`;
+            
+            const userQuery = `Draft an urgent public appeal post for the following missing person:
+Name: ${person.name}
+Age: ${person.age}
+Weight: ${person.weight} lbs
+Hair Color: ${person.hairColor}
+Last Seen Location: ${person.lastSeenLocation}
+Last Seen Time: ${person.lastSeenTime}
+Picture URL (for reference, do not include in text): ${person.pictureUrl}
+
+Generate the public appeal now.`;
+
+            try {
+                const appealText = await callGeminiApi(userQuery, systemInstruction);
+                
+                // Simple formatting for display: convert newlines to breaks
+                const htmlContent = appealText
+                    .replace(/\n/g, '<br>')
+                    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>'); 
+
+                outputDiv.innerHTML = `
+                    <div class="p-6 mt-6 rounded-xl border border-red-600 bg-red-900/20">
+                        <h3 class="text-2xl font-semibold mb-4 text-red-300 flex items-center">
+                            <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+                            AI Drafted Public Appeal
+                        </h3>
+                        <div class="text-gray-200 text-sm whitespace-pre-line">${htmlContent}</div>
+                        <button onclick="copyToClipboard('${appealText.replace(/'/g, "\\'")}')" class="btn-secondary mt-4 py-2 px-4 rounded-lg font-bold text-sm">
+                            Copy Text to Clipboard
+                        </button>
+                    </div>
+                `;
+            } catch (error) {
+                console.error("Gemini API call failed:", error);
+                outputDiv.innerHTML = '<p class="text-red-400 p-4 rounded-lg bg-red-900/30">Failed to generate public appeal. Check console for API error details.</p>';
+            }
+        }
+        
+        window.copyToClipboard = function(text) {
+            const textarea = document.createElement('textarea');
+            textarea.value = text;
+            document.body.appendChild(textarea);
+            textarea.select();
+            document.execCommand('copy');
+            document.body.removeChild(textarea);
+
+            const appealOutput = document.getElementById('ai-appeal-output');
+            const message = document.createElement('p');
+            message.textContent = 'Copied to clipboard!';
+            message.className = 'text-green-400 text-sm mt-2';
+            appealOutput.appendChild(message);
+            setTimeout(() => appealOutput.removeChild(message), 2000);
+        }
+
+        // Simple view manager
+        function showView(viewName, data = null) {
+            // Cleanup previous listeners
+            if (unsubscribeWanted) unsubscribeWanted();
+            if (unsubscribeMissing) unsubscribeMissing();
+
+            // Clear content and show the loading spinner
+            contentDiv.innerHTML = '<div class="text-center p-12"><div class="animate-spin inline-block w-8 h-8 border-4 border-t-4 border-[#58a6ff] border-opacity-50 rounded-full"></div><p class="mt-2 text-gray-400">Loading...</p></div>';
+
+            // IMPORTANT: Now we use the isAuthReady check only as a safeguard, 
+            // as showView is primarily called by onAuthStateChanged.
+            if (!window.isAuthReady()) {
+                console.log("Auth not ready. Waiting to show view:", viewName);
+                setTimeout(() => showView(viewName, data), 100);
+                return;
+            }
+
+            // NEW: Look up the data object if we received an ID string (from card click)
+            let viewData = data;
+            if (typeof data === 'string' && (viewName.endsWith('-detail'))) {
+                viewData = window.detailCache[data];
+                if (!viewData) {
+                    contentDiv.innerHTML = '<div class="text-center p-12"><h2 class="text-3xl font-semibold text-red-500">Error: Data Not Found</h2><p class="text-gray-400">Could not retrieve details for ID: ' + data + '</p></div>';
+                    return;
+                }
+            }
+
+
+            switch (viewName) {
+                case 'wanted':
+                    renderWantedView();
+                    break;
+                case 'missing':
+                    renderMissingView();
+                    break;
+                case 'report':
+                    renderReportView();
+                    break;
+                case 'wanted-detail':
+                    renderCriminalDetail(viewData);
+                    break;
+                case 'missing-detail':
+                    renderMissingPersonDetail(viewData);
+                    break;
+                default:
+                    contentDiv.innerHTML = '<div class="text-center p-12"><h2 class="text-3xl font-semibold text-red-500">Error: View Not Found</h2></div>';
+            }
+        }
+
+        // --- 1. WANTED CRIMINAL FEATURE ---
+
+        function renderWantedView() {
+            contentDiv.innerHTML = `
+                <h2 class="text-3xl font-bold mb-6 text-gray-100">Wanted Criminals</h2>
+                <div id="wanted-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                    <!-- Cards will be injected here by the listener -->
+                </div>
+                <div id="wanted-loading" class="text-center p-6 text-gray-400">Loading wanted list...</div>
+            `;
+
+            const wantedGrid = document.getElementById('wanted-grid');
+            const wantedCollection = window.collection(window.db, window.WANTED_COLLECTION_PATH);
+
+            unsubscribeWanted = window.onSnapshot(wantedCollection, (snapshot) => {
+                const criminals = [];
+                snapshot.forEach(doc => {
+                    criminals.push({ id: doc.id, ...doc.data() });
+                });
+
+                document.getElementById('wanted-loading').style.display = 'none';
+                wantedGrid.innerHTML = criminals.map(c => createCriminalCard(c)).join('');
+            }, (error) => {
+                console.error("Error fetching wanted criminals: ", error);
+                // Display error to user
+                wantedGrid.innerHTML = `<p class="text-red-400 col-span-4 p-4 rounded-lg bg-red-900/30">Failed to load wanted criminals. Please check Firebase permissions. Error: ${error.message}</p>`;
+            });
+        }
+
+        function createCriminalCard(criminal) {
+            // FIX: Store object by ID and pass only the ID to onclick
+            window.detailCache[criminal.id] = criminal;
+            return `
+                <div class="container-card p-4 rounded-xl transform hover:scale-[1.02] transition-all duration-300 cursor-pointer" onclick="showView('wanted-detail', '${criminal.id}')">
+                    <img src="${criminal.pictureUrl}" onerror="this.onerror=null; this.src='https://placehold.co/150x200/30363d/9e9e9e?text=No+Image'" alt="${criminal.name}" class="w-full h-48 object-cover rounded-lg mb-3">
+                    <h3 class="text-lg font-semibold text-gray-100 truncate">${criminal.name}</h3>
+                    <p class="text-sm text-red-400 mt-1">Crime: ${criminal.crime.split(',')[0]}</p>
+                </div>
+            `;
+        }
+
+        function renderCriminalDetail(criminal) {
+            contentDiv.innerHTML = `
+                <div class="max-w-4xl mx-auto container-card p-6 md:p-10 rounded-xl">
+                    <button onclick="showView('wanted')" class="text-blue-400 hover:text-blue-300 mb-6 flex items-center">
+                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
+                        Back to Wanted List
+                    </button>
+                    <div class="flex flex-col md:flex-row gap-8 items-start">
+                        <img src="${criminal.pictureUrl}" onerror="this.onerror=null; this.src='https://placehold.co/300x400/30363d/9e9e9e?text=No+Image+Available'" alt="${criminal.name}" class="w-full md:w-64 h-80 object-cover rounded-lg flex-shrink-0">
+                        <div class="flex-grow">
+                            <h2 class="text-4xl font-extrabold text-red-500 mb-2">${criminal.name}</h2>
+                            <p class="text-xl font-medium text-gray-300 mb-4">${criminal.crime}</p>
+                            <div class="space-y-3">
+                                <p class="text-gray-400"><strong class="text-gray-200">Last Seen:</strong> ${criminal.lastSeen}</p>
+                                <p class="text-gray-400"><strong class="text-gray-200">Details:</strong> ${criminal.details}</p>
+                                <p class="text-gray-500 text-sm mt-6">Report any sighting immediately to local authorities. Do not approach.</p>
+                            </div>
+
+                            <!-- LLM Feature Button -->
+                            <button onclick="window.generateCriminalProfile('${criminal.id}')" class="btn-primary mt-8 py-2 px-4 rounded-lg font-bold text-sm flex items-center">
+                                ✨ Generate Psychological Profile & Risk Assessment
+                            </button>
+                            
+                        </div>
+                    </div>
+                    <!-- LLM Output Area -->
+                    <div id="ai-profile-output" class="mt-8">
+                        <p class="text-gray-500 text-sm">Click the button above to generate a forensic profile using AI.</p>
+                    </div>
+                </div>
+            `;
+        }
+
+        // --- 2. MISSING PERSON FEATURE ---
+
+        function renderMissingView() {
+            contentDiv.innerHTML = `
+                <h2 class="text-3xl font-bold mb-6 text-gray-100">Missing Persons Reports</h2>
+                <div id="missing-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                    <!-- Cards will be injected here by the listener -->
+                </div>
+                <div id="missing-loading" class="text-center p-6 text-gray-400">Loading reports...</div>
+            `;
+
+            const missingGrid = document.getElementById('missing-grid');
+            const missingCollection = window.collection(window.db, window.MISSING_COLLECTION_PATH);
+
+            // Real-time listener for Missing Persons
+            unsubscribeMissing = window.onSnapshot(missingCollection, (snapshot) => {
+                const persons = [];
+                snapshot.forEach(doc => {
+                    persons.push({ id: doc.id, ...doc.data() });
+                });
+
+                document.getElementById('missing-loading').style.display = 'none';
+                missingGrid.innerHTML = persons.map(p => createMissingPersonCard(p)).join('');
+            }, (error) => {
+                console.error("Error fetching missing persons: ", error);
+                missingGrid.innerHTML = `<p class="text-red-400 col-span-4 p-4 rounded-lg bg-red-900/30">Failed to load missing persons data. Please check Firebase permissions. Error: ${error.message}</p>`;
+            });
+        }
+
+        function createMissingPersonCard(person) {
+            const isMissing = person.status === 'Missing';
+            const statusClass = isMissing ? 'status-missing' : 'status-found';
+            const statusText = isMissing ? 'MISSING' : 'FOUND';
+
+            // FIX: Store object by ID and pass only the ID to onclick
+            window.detailCache[person.id] = person;
+
+            return `
+                <div class="container-card p-4 rounded-xl transform hover:scale-[1.02] transition-all duration-300 cursor-pointer" onclick="showView('missing-detail', '${person.id}')">
+                    <img src="${person.pictureUrl}" onerror="this.onerror=null; this.src='https://placehold.co/150x200/30363d/9e9e9e?text=No+Image'" alt="${person.name}" class="w-full h-48 object-cover rounded-lg mb-3">
+                    <h3 class="text-lg font-semibold text-gray-100 truncate">${person.name}, ${person.age}</h3>
+                    <div class="${statusClass} text-xs font-bold px-2 py-1 rounded-full w-fit mt-1">${statusText}</div>
+                </div>
+            `;
+        }
+
+        function renderMissingPersonDetail(person) {
+            const isMissing = person.status === 'Missing';
+            const statusClass = isMissing ? 'status-missing' : 'status-found';
+            const statusText = isMissing ? 'Still Missing' : 'Found and Safe';
+
+            contentDiv.innerHTML = `
+                <div class="max-w-4xl mx-auto container-card p-6 md:p-10 rounded-xl">
+                    <button onclick="showView('missing')" class="text-blue-400 hover:text-blue-300 mb-6 flex items-center">
+                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
+                        Back to Missing List
+                    </button>
+                    <div class="flex flex-col md:flex-row gap-8 items-start">
+                        <img src="${person.pictureUrl}" onerror="this.onerror=null; this.src='https://placehold.co/300x400/30363d/9e9e9e?text=No+Image+Available'" alt="${person.name}" class="w-full md:w-64 h-80 object-cover rounded-lg flex-shrink-0">
+                        <div class="flex-grow">
+                            <h2 class="text-4xl font-extrabold text-gray-100 mb-2">${person.name}</h2>
+                            <div class="${statusClass} text-lg font-bold px-3 py-1 rounded-full w-fit mb-4">${statusText}</div>
+
+                            <div class="grid grid-cols-2 gap-4 text-gray-400">
+                                <div><strong class="text-gray-200">Age:</strong> ${person.age}</div>
+                                <div><strong class="text-gray-200">Weight:</strong> ${person.weight} lbs</div>
+                                <div><strong class="text-gray-200">Blood Group:</strong> ${person.bloodGroup}</div>
+                                <div><strong class="text-gray-200">Hair Color:</strong> ${person.hairColor}</div>
+                            </div>
+
+                            <div class="mt-4 space-y-2">
+                                <p class="text-gray-400"><strong class="text-gray-200">Last Seen Location:</strong> ${person.lastSeenLocation}</p>
+                                <p class="text-gray-400"><strong class="text-gray-200">Last Seen Time:</strong> ${person.lastSeenTime}</p>
+                            </div>
+
+                            ${isMissing ? `
+                            <div class="mt-8">
+                                <!-- LLM Feature 2 Button -->
+                                <button onclick="window.draftPublicAppeal('${person.id}')" class="bg-red-600 hover:bg-red-700 text-white py-2 px-4 rounded-lg font-bold text-sm flex items-center transition duration-150">
+                                    ✨ Draft Public Appeal / Social Post
+                                </button>
+                            </div>
+                            
+                            <div class="mt-8 p-4 bg-yellow-900 bg-opacity-30 border border-yellow-700 rounded-lg">
+                                <label for="found-checkbox-${person.id}" class="flex items-center space-x-3 cursor-pointer">
+                                    <input type="checkbox" id="found-checkbox-${person.id}" class="h-6 w-6 text-green-600 rounded focus:ring-green-500" onchange="handleFoundReport('${person.id}', this.checked)">
+                                    <span class="text-lg font-semibold text-yellow-300">I have found this person and they are safe with me.</span>
+                                </label>
+                                <p id="found-message-${person.id}" class="text-sm mt-2 text-yellow-400 hidden">Thank you for reporting! Police will be notified immediately.</p>
+                            </div>
+                            ` : `<p class="mt-8 p-4 bg-green-900 bg-opacity-30 border border-green-700 rounded-lg text-lg text-green-300 font-semibold">This person has been marked as found.</p>`}
+                        </div>
+                    </div>
+                    <!-- LLM Appeal Output Area -->
+                    <div id="ai-appeal-output" class="mt-8">
+                        <p class="text-gray-500 text-sm">Click the red button above to generate a ready-to-use social media appeal.</p>
+                    </div>
+                    
+                </div>
+            `;
+        }
+
+        window.handleFoundReport = async function(personId, isChecked) {
+            const messageEl = document.getElementById(`found-message-${personId}`);
+            if (isChecked) {
+                const personRef = window.doc(window.db, window.MISSING_COLLECTION_PATH, personId);
+                try {
+                    await window.updateDoc(personRef, {
+                        status: 'Found',
+                        foundTime: window.serverTimestamp(),
+                        foundByUserId: window.userId()
+                    });
+                    messageEl.textContent = "Status updated to 'Found'! Thank you for your service to the community. Returning to list...";
+                    messageEl.classList.remove('hidden');
+                    // Automatically navigate back to refresh the list status
+                    setTimeout(() => showView('missing'), 2000);
+                } catch (e) {
+                    console.error("Error updating document: ", e);
+                    messageEl.textContent = "Error reporting found status. Please try again or check the console.";
+                    messageEl.classList.remove('hidden');
+                }
+            }
+        }
+
+
+        // --- 3. MISSING PERSON REPORT SYSTEM ---
+
+        function renderReportView() {
+            contentDiv.innerHTML = `
+                <div class="max-w-3xl mx-auto container-card p-6 md:p-10 rounded-xl">
+                    <h2 class="text-3xl font-bold mb-6 text-gray-100">Report a Missing Person</h2>
+                    <form id="missing-report-form" class="space-y-4">
+                        <p class="text-sm text-yellow-400 p-3 rounded-lg bg-yellow-900 bg-opacity-30">All fields are important. A clear picture and detailed last seen information are essential for police investigation.</p>
+
+                        <!-- Personal Info -->
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            ${createInputField('text', 'name', 'Full Name', 'John Doe', true)}
+                            ${createInputField('number', 'age', 'Age', 'e.g., 35', true)}
+                            ${createInputField('number', 'weight', 'Weight (lbs)', 'e.g., 150')}
+                            ${createInputField('text', 'bloodGroup', 'Blood Group (Optional)', 'A+, B-, etc.')}
+                        </div>
+                        
+                        <!-- Appearance -->
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            ${createInputField('text', 'hairColor', 'Hair Color', 'Brown, Blonde, Black', true)}
+                            ${createInputField('text', 'pictureUrl', 'Picture URL', 'https://...', true)}
+                        </div>
+
+                        <!-- Last Seen -->
+                        ${createInputField('text', 'lastSeenLocation', 'Last Seen Location', 'Street address or landmark', true)}
+                        ${createInputField('datetime-local', 'lastSeenTime', 'Last Seen Date/Time', '', true)}
+
+                        <button type="submit" class="btn-primary w-full py-3 rounded-lg font-bold text-lg mt-6">
+                            Submit Report
+                        </button>
+                        <p id="report-message" class="mt-4 text-center"></p>
+                    </form>
+                </div>
+            `;
+            document.getElementById('missing-report-form').onsubmit = submitMissingReport;
+        }
+
+        function createInputField(type, id, label, placeholder, required = false) {
+            return `
+                <div class="flex flex-col">
+                    <label for="${id}" class="text-sm font-medium mb-1 text-gray-300">${label} ${required ? '<span class="text-red-500">*</span>' : ''}</label>
+                    <input type="${type}" id="${id}" name="${id}" placeholder="${placeholder}" ${required ? 'required' : ''}
+                        class="px-3 py-2 rounded-lg bg-[#0d1117] border border-[#30363d] text-gray-100 focus:outline-none focus:ring-2 focus:ring-[#58a6ff]">
+                </div>
+            `;
+        }
+
+        window.submitMissingReport = async function(event) {
+            event.preventDefault();
+            const form = event.target;
+            const messageEl = document.getElementById('report-message');
+            messageEl.textContent = 'Submitting report...';
+            messageEl.className = 'mt-4 text-center text-blue-400';
+
+            const formData = {
+                name: form.name.value,
+                age: parseInt(form.age.value),
+                weight: parseInt(form.weight.value) || null,
+                bloodGroup: form.bloodGroup.value || 'Unknown',
+                hairColor: form.hairColor.value,
+                pictureUrl: form.pictureUrl.value,
+                lastSeenLocation: form.lastSeenLocation.value,
+                lastSeenTime: form.lastSeenTime.value.replace('T', ' '), // Format datetime nicely
+                status: 'Missing',
+                reportUserId: window.userId(),
+                timestamp: window.serverTimestamp()
+            };
+
+            try {
+                const docRef = await window.addDoc(window.collection(window.db, window.MISSING_COLLECTION_PATH), formData);
+                messageEl.textContent = 'Report successfully submitted to the police database!';
+                messageEl.className = 'mt-4 text-center text-green-400 font-bold';
+                form.reset();
+                // Optionally navigate to the missing persons view to see the new entry
+                setTimeout(() => showView('missing'), 2000); 
+
+            } catch (e) {
+                console.error("Error adding document: ", e);
+                messageEl.textContent = 'Error: Could not submit the report. Please try again.';
+                messageEl.className = 'mt-4 text-center text-red-400 font-bold';
+            }
+        }
+
+        // Initialize the app state on load - Removed redundant onload function
+    </script>
+</body>
+</html>

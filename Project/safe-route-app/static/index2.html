@@ -122,7 +122,8 @@
       background: var(--dark-surface);
       padding: 6rem 2rem;
       text-align: center;
-      background-image: url('content/city.jpg');
+      /* Background image URL updated */
+      background-image: url('contents/city.jpg');
       background-size: cover;
       background-position: center;
       position: relative;
@@ -601,7 +602,7 @@
       <div class="logo-text">My Safety</div>
     </div>
     <!-- Removed nav-links div -->
-    <a href="#" class="login-btn">
+    <a href="login.html" class="login-btn">
       <span>→</span>
       Login
     </a>
@@ -613,7 +614,7 @@
       <h1 class="hero-title">Navigate Your World Safely</h1>
       <p class="hero-subtitle">Get AI-powered safest routes, view crime heatmaps, and contribute to a safer community.</p>
       <div class="hero-actions">
-        <!-- Buttons call new function to enforce login -->
+        <!-- Buttons trigger modal, modal's login button redirects to login.html -->
         <a href="#" class="btn btn-primary btn-hero-primary" onclick="checkLoginRequirement(event, 'Safe Route Finder')">Find a Safe Route</a>
         <a href="#" class="btn btn-secondary btn-hero-secondary" onclick="checkLoginRequirement(event, 'Incident Report Form')">Report an Incident</a>
       </div>
@@ -734,8 +735,8 @@
               <h3 class="panel-title">Find Your Safest Route</h3>
               <p class="panel-description">You need to be logged in to access this feature.</p>
               <!-- Links call login screen -->
-              <a href="#" class="btn btn-primary" style="margin-top: 1rem;">Login</a>
-              <a href="#" class="btn btn-secondary">Create an Account</a>
+              <a href="login.html" class="btn btn-primary" style="margin-top: 1rem;">Login</a>
+              <a href="signup.html" class="btn btn-secondary">Create an Account</a>
           </div>
           
           <!-- Leaflet Map Container -->
@@ -796,10 +797,10 @@
         modalButtons.innerHTML = '';
 
         const loginButton = document.createElement('a');
-        loginButton.href = '#'; // Placeholder for login page
+        loginButton.href = 'login.html'; // Redirect to login page
         loginButton.className = 'btn btn-primary btn-action';
         loginButton.textContent = 'Login';
-        loginButton.onclick = closeModal; // In a real app, this would redirect
+        // Remove closeModal, allow redirect
         
         const cancelButton = document.createElement('button');
         cancelButton.className = 'btn btn-secondary';
@@ -860,53 +861,57 @@
     // --- End Tooltip Functions ---
 
     document.addEventListener('DOMContentLoaded', function() {
-        // --- Leaflet Map Initialization ---
         
-        // Coordinates for Dhaka, Bangladesh (Used as the center for the map)
-        const DHAKA_LAT = 23.777176;
-        const DHAKA_LNG = 90.399452;
-        const INITIAL_ZOOM = 12;
+        // CRITICAL FIX: Wrap map initialization in a timeout to let the DOM settle and calculate map dimensions
+        setTimeout(function() {
+            // --- Leaflet Map Initialization ---
+            
+            // Coordinates for Dhaka, Bangladesh (Used as the center for the map)
+            const DHAKA_LAT = 23.777176;
+            const DHAKA_LNG = 90.399452;
+            const INITIAL_ZOOM = 12;
 
-        const map = L.map('heatmap-map', {
-            center: [DHAKA_LAT, DHAKA_LNG],
-            zoom: INITIAL_ZOOM,
-            // scrollWheelZoom is now enabled by default 
-        });
+            const map = L.map('heatmap-map', {
+                center: [DHAKA_LAT, DHAKA_LNG],
+                zoom: INITIAL_ZOOM,
+            });
 
-        // Add OSM (OpenStreetMap) tiles
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: '© OpenStreetMap contributors',
-            maxZoom: 18,
-            // Adjust opacity and tone to fit the dark theme slightly
-            opacity: 0.8,
-            className: 'map-tiles'
-        }).addTo(map);
+            // Force recalculate size before adding layers
+            map.invalidateSize();
 
-        // --- Mock Crime Data for Heatmap ---
-        // Format: [lat, lng, intensity]
-        const crimePoints = [
-            [23.7548, 90.3908, 0.8], // Dhanmondi (Theft)
-            [23.7809, 90.4137, 0.9], // Gulshan (High intensity, high-density reporting)
-            [23.7088, 90.4093, 0.6], // Jatrabari (Medium intensity)
-            [23.8103, 90.4125, 0.7], // Mirpur (Medium intensity)
-            [23.7562, 90.3676, 0.5], // Mohammadpur (Medium intensity)
-            [23.7291, 90.4079, 1.0], // Old Dhaka (Highest intensity)
-            [23.7634, 90.4011, 0.4], // Moghbazar
-            [23.7431, 90.3804, 0.3], // Panthapath
-            [23.7850, 90.3700, 0.6], // Cantonment Area
-            [23.8000, 90.3550, 0.5], // Mirpur 12
-        ];
+            // Add OSM (OpenStreetMap) tiles
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '© OpenStreetMap contributors',
+                maxZoom: 18,
+                // Adjust opacity and tone to fit the dark theme slightly
+                opacity: 0.8,
+                className: 'map-tiles'
+            }).addTo(map);
 
-        // Add Heatmap Layer
-        L.heatLayer(crimePoints, { 
-            radius: 25, 
-            blur: 15,
-            maxZoom: 17,
-            gradient: {0.4: 'blue', 0.65: 'lime', 1.0: 'red'} // Blue/Green/Red intensity gradient
-        }).addTo(map);
-        
-        // Ensure map container is sized correctly on load
-        map.invalidateSize();
+            // --- Mock Crime Data for Heatmap ---
+            // Format: [lat, lng, intensity]
+            const crimePoints = [
+                [23.7548, 90.3908, 0.8], // Dhanmondi (Theft)
+                [23.7809, 90.4137, 0.9], // Gulshan (High intensity, high-density reporting)
+                [23.7088, 90.4093, 0.6], // Jatrabari (Medium intensity)
+                [23.8103, 90.4125, 0.7], // Mirpur (Medium intensity)
+                [23.7562, 90.3676, 0.5], // Mohammadpur (Medium intensity)
+                [23.7291, 90.4079, 1.0], // Old Dhaka (Highest intensity)
+                [23.7634, 90.4011, 0.4], // Moghbazar
+                [23.7431, 90.3804, 0.3], // Panthapath
+                [23.7850, 90.3700, 0.6], // Cantonment Area
+                [23.8000, 90.3550, 0.5], // Mirpur 12
+            ];
+
+            // Add Heatmap Layer
+            L.heatLayer(crimePoints, { 
+                radius: 25, 
+                blur: 15,
+                maxZoom: 17,
+                gradient: {0.4: 'blue', 0.65: 'lime', 1.0: 'red'} // Blue/Green/Red intensity gradient
+            }).addTo(map);
+            
+        }, 50); // Small delay to allow CSS layout to complete
     });
   </script>
 </body>

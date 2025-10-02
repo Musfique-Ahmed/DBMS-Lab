@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="en" class="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Safe Route Dashboard - Bangladesh</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide/dist/umd/lucide.min.js"></script>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/leaflet.heat@0.2.0/dist/leaflet-heat.js"></script>
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        #map {
+            height: 100%;
+            width: 100%;
+            position: relative;
+            z-index: 10; /* Lower than user menu */
+        }
+        #user-menu {
+            z-index: 1000 !important; /* Much higher than map */
+        }
+        .card { transition: transform 0.2s; }
+        .card:hover { transform: translateY(-3px); }
+        .bar { height:16px; border-radius:12px; overflow:hidden; font-size:10px; line-height:16px; color:white; text-align:right; padding-right:2px; }
+        .progress-bg { background:#e0e0e0; border-radius:12px; height:16px; width:100%; overflow:hidden; }
+
+        /* Custom Shadow UI Button Style */
+        .shadow-button {
+            border-radius: 9999px; /* Pill shape */
+            padding: 0.75rem 1.5rem; /* py-3 px-6 */
+            background-color: rgba(147, 51, 234, 0.2); /* Purple-600 with opacity for base */
+            color: #d8b4fe; /* Light purple text */
+            font-weight: 600;
+            box-shadow: 
+                -4px -4px 8px rgba(255, 255, 255, 0.05), /* Light source for dark mode */
+                4px 4px 8px rgba(0, 0, 0, 0.5); /* Shadow for dark mode */
+            transition: all 0.2s ease-in-out;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            text-decoration: none;
+        }
+
+        .light .shadow-button {
+            background-color: #f3f4f6; /* Gray-100 for light mode */
+            color: #4c1d95; /* Deep purple text */
+            box-shadow: 
+                -4px -4px 8px rgba(255, 255, 255, 1), /* Light source for light mode */
+                4px 4px 8px rgba(0, 0, 0, 0.1); /* Shadow for light mode */
+        }
+
+        .shadow-button:hover {
+            box-shadow: 
+                -2px -2px 4px rgba(255, 255, 255, 0.1), 
+                2px 2px 4px rgba(0, 0, 0, 0.6);
+            transform: scale(0.98);
+        }
+
+        .light .shadow-button:hover {
+            box-shadow: 
+                -2px -2px 4px rgba(255, 255, 255, 0.8), 
+                2px 2px 4px rgba(0, 0, 0, 0.15);
+        }
+
+    </style>
+    <script>
+        // Theme toggle logic
+        if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.classList.add('dark');
+        } else {
+            document.documentElement.classList.remove('dark');
+        }
+    </script>
+</head>
+<body class="bg-gray-100 dark:bg-gray-900 text-gray-800 dark:text-gray-200">
+
+<header class="sticky top-0 z-50 bg-white dark:bg-gray-900/50 border-b border-gray-200 dark:border-gray-800 p-4 flex items-center justify-between shadow-md">
+    <div class="flex items-center space-x-4">
+        <div class="flex items-center justify-center text-purple-600 dark:text-purple-500">
+            <i data-lucide="shield-half" class="w-8 h-8"></i>
+        </div>
+        <h1 class="text-xl font-bold text-gray-900 dark:text-white hidden sm:block">Safe Route Dashboard</h1>
+    </div>
+
+    <nav class="hidden lg:flex items-center space-x-4">
+        <a href="#" class="shadow-button text-sm">
+            <i data-lucide="route" class="w-4 h-4 mr-2"></i>Safe Area
+        </a>
+        <a href="#" class="shadow-button text-sm">
+            <i data-lucide="siren" class="w-4 h-4 mr-2"></i>Report to Police
+        </a>
+        <a href="#" class="shadow-button text-sm">
+            <i data-lucide="users" class="w-4 h-4 mr-2"></i>Wanted Criminals
+        </a>
+        <a href="#" class="shadow-button text-sm">
+            <i data-lucide="search" class="w-4 h-4 mr-2"></i>Missing Persons & Items
+        </a>
+    </nav>
+
+    <div class="flex items-center space-x-4 relative">
+        <button id="theme-toggle" class="p-2 text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors">
+            <i data-lucide="sun" class="w-6 h-6 block dark:hidden"></i>
+            <i data-lucide="moon" class="w-6 h-6 hidden dark:block"></i>
+        </button>
+
+        <button id="user-menu-button" class="flex items-center space-x-2 p-1 rounded-full bg-purple-600 hover:bg-purple-700 text-white transition-colors focus:outline-none z-50">
+            <div class="w-8 h-8 flex items-center justify-center text-xl font-semibold rounded-full bg-white text-purple-600">F</div>
+            <i data-lucide="chevron-down" class="w-4 h-4 hidden sm:block"></i>
+        </button>
+
+        <div id="user-menu" class="absolute right-0 top-full mt-2 w-64 bg-white dark:bg-gray-800 rounded-xl shadow-2xl border border-gray-200 dark:border-gray-700 hidden z-50" role="menu" aria-orientation="vertical" aria-labelledby="user-menu-button">
+            <div class="p-4 border-b border-gray-200 dark:border-gray-700">
+                <p class="font-semibold text-gray-900 dark:text-white">Hi, Farhan!</p>
+                <p class="text-sm text-gray-500 dark:text-gray-400">farhan@example.com</p>
+            </div>
+            <a href="#" class="flex items-center p-3 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+                <i data-lucide="message-circle" class="w-5 h-5 mr-3"></i>
+                Chat with Admin
+            </a>
+            <button onclick="alert('Logging out...')" class="w-full text-left flex items-center p-3 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors rounded-b-xl">
+                <i data-lucide="log-out" class="w-5 h-5 mr-3"></i>
+                Logout
+            </button>
+        </div>
+    </div>
+</header>
+
+<main class="h-[calc(100vh-68px)] grid grid-cols-12 gap-6 p-6 overflow-y-auto">
+    <div class="col-span-12 lg:col-span-4 xl:col-span-3 flex flex-col space-y-6">
+        <div class="bg-white dark:bg-gray-900/50 p-6 rounded-2xl border border-gray-200 dark:border-gray-800 flex flex-col">
+            <h1 class="text-2xl font-bold text-gray-900 dark:text-white mb-1">Safe Route Planner</h1>
+            <p class="text-gray-500 dark:text-gray-400 mb-6">Your safety guide for navigating Bangladesh.</p>
+            <form id="route-form" class="space-y-4">
+                <div>
+                    <label for="start" class="text-sm font-medium text-gray-700 dark:text-gray-300">Start Location</label>
+                    <div class="flex items-center space-x-2">
+                        <input type="text" id="start" class="flex-1 bg-gray-100 dark:bg-gray-800 rounded-lg p-3" placeholder="Your Current Location" required>
+                        <button type="button" id="get-location" class="p-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700">
+                            <i data-lucide="crosshair" class="w-5 h-5"></i>
+                        </button>
+                    </div>
+                </div>
+                <div>
+                    <label for="destination" class="text-sm font-medium text-gray-700 dark:text-gray-300">Destination</label>
+                    <input type="text" id="destination" class="w-full bg-gray-100 dark:bg-gray-800 rounded-lg p-3" placeholder="e.g., Gulshan, Dhaka" required>
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label for="time" class="text-sm font-medium text-gray-700 dark:text-gray-300">Time of Visit</label>
+                        <input type="time" id="time" class="w-full bg-gray-100 dark:bg-gray-800 rounded-lg p-3" required>
+                    </div>
+                    <div>
+                        <label for="age" class="text-sm font-medium text-gray-700 dark:text-gray-300">Age</label>
+                        <input type="number" id="age" class="w-full bg-gray-100 dark:bg-gray-800 rounded-lg p-3" placeholder="25" required>
+                    </div>
+                </div>
+                <div>
+                    <label for="gender" class="text-sm font-medium text-gray-700 dark:text-gray-300">Gender</label>
+                    <select id="gender" class="w-full bg-gray-100 dark:bg-gray-800 rounded-lg p-3">
+                        <option>Male</option>
+                        <option>Female</option>
+                        <option>Other</option>
+                    </select>
+                </div>
+                <button type="submit" class="w-full py-3 px-4 rounded-lg text-white font-semibold bg-purple-600 hover:bg-purple-700">Find Safest Area</button>
+            </form>
+        </div>
+
+        <div class="bg-white dark:bg-gray-900/50 p-6 rounded-2xl border border-gray-200 dark:border-gray-800 flex-1 overflow-y-auto">
+            <h2 class="text-xl font-bold text-gray-900 dark:text-white mb-4">Crime Cases by Area</h2>
+            <div id="areas" class="space-y-4"></div>
+        </div>
+    </div>
+
+    <div class="col-span-12 lg:col-span-8 xl:col-span-9 bg-gray-200 dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-800 overflow-visible">
+        <div id="map"></div>
+    </div>
+</main>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    lucide.createIcons();
+
+    // Theme Toggle Logic
+    const themeToggle = document.getElementById('theme-toggle');
+    const html = document.documentElement;
+
+    // Auto-fill current time in "Time of Visit"
+    const timeInput = document.getElementById("time");
+    if (timeInput) {
+        const now = new Date();
+        const hours = String(now.getHours()).padStart(2, "0");
+        const minutes = String(now.getMinutes()).padStart(2, "0");
+        timeInput.value = `${hours}:${minutes}`;
+    }
+
+    // Leaflet Map Setup
+    const dhakaCoords = [23.8103, 90.4125];
+    const map = L.map('map').setView(dhakaCoords, 13);
+    const lightTiles = 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
+    const darkTiles = 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png';
+    let tileLayer = L.tileLayer(html.classList.contains('dark') ? darkTiles : lightTiles).addTo(map);
+
+    themeToggle.addEventListener('click', () => {
+        html.classList.toggle('dark');
+        localStorage.theme = html.classList.contains('dark') ? 'dark' : 'light';
+        tileLayer.setUrl(html.classList.contains('dark') ? darkTiles : lightTiles);
+    });
+
+    // User Menu Toggle Logic
+    const userMenuButton = document.getElementById('user-menu-button');
+    const userMenu = document.getElementById('user-menu');
+    userMenuButton.addEventListener('click', (e) => {
+        e.stopPropagation();
+        userMenu.classList.toggle('hidden');
+    });
+    document.addEventListener('click', (e) => {
+        // Close menu if click is outside the button and outside the menu
+        if (!userMenu.contains(e.target) && !userMenuButton.contains(e.target)) {
+            userMenu.classList.add('hidden');
+        }
+    });
+
+
+    // Get current location
+    document.getElementById("get-location").addEventListener("click", () => {
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(
+                pos => {
+                    const { latitude, longitude } = pos.coords;
+                    document.getElementById("start").value = `${latitude}, ${longitude}`;
+                    map.setView([latitude, longitude], 14);
+                    L.marker([latitude, longitude]).addTo(map).bindPopup("You are here").openPopup();
+                },
+                err => alert("Unable to fetch location: " + err.message)
+            );
+        } else {
+            alert("Geolocation is not supported by this browser.");
+        }
+    });
+
+    const investigationStages = ["FIR Registered","Crime Scene Investigation","Evidence Collection","Suspect Identification","Interrogation","Case Filed","Court Trial"];
+
+    const areas = [
+        {
+            name:"Gulistan",
+            lat:23.7289, lng:90.4171,
+            solved:[{title:"Robbery",date:"2025-09-01",details:"Bank safe broken, cash stolen. Suspects caught."}],
+            unsolved:[{title:"Arson",date:"2025-09-10",details:"Warehouse fire suspected arson.",state:"Evidence Collection"}]
+        },
+        {
+            name:"Dhanmondi-27",
+            lat:23.7510, lng:90.3690,
+            solved:[{title:"Assault",date:"2025-08-20",details:"Fight at street corner, suspects arrested."}],
+            unsolved:[{title:"Theft",date:"2025-09-08",details:"Car window smashed, items stolen.",state:"Investigation Ongoing"}]
+        }
+    ];
+
+    const container = document.getElementById('areas');
+
+    areas.forEach(area=>{
+        const card=document.createElement('div');
+        card.className="card bg-white dark:bg-gray-900/50 p-4 rounded-xl border border-gray-200 dark:border-gray-800";
+
+        const solvedHTML=area.solved.map(c=>`
+            <div class="bg-green-50 dark:bg-green-900/20 p-2 rounded-lg border border-green-200 dark:border-green-700">
+                <strong>${c.title}</strong> <span class="text-gray-500 dark:text-gray-400">(${c.date})</span><br>
+                <span class="text-gray-700 dark:text-gray-300">${c.details}</span>
+            </div>`).join('');
+
+        const unsolvedHTML=area.unsolved.map(c=>{
+            const stageIndex=investigationStages.indexOf(c.state)+1 || 3;
+            const progress=Math.round(stageIndex/investigationStages.length*100);
+            return `<div class="bg-red-50 dark:bg-red-900/20 p-2 rounded-lg border border-red-200 dark:border-red-700">
+                        <strong>${c.title}</strong> <span class="text-gray-500 dark:text-gray-400">(${c.date})</span><br>
+                        <span class="text-gray-700 dark:text-gray-300">${c.details}</span><br>
+                        <span class="text-sm font-semibold text-gray-600 dark:text-gray-400">Current Stage: ${c.state}</span>
+                        <div class="progress-bg mt-1">
+                            <div class="bar bg-red-600" style="width:${progress}%">${progress}%</div>
+                        </div>
+                    </div>`;
+        }).join('');
+
+        card.innerHTML=`
+            <h3 class="font-bold text-gray-900 dark:text-white mb-2">${area.name}</h3>
+            <button class="w-full text-left font-semibold text-green-600 mb-1" onclick="toggleSection(this)">Solved Cases (${area.solved.length})</button>
+            <div class="pl-4 space-y-2 hidden">${solvedHTML}</div>
+            <button class="w-full text-left font-semibold text-red-600 mt-2 mb-1" onclick="toggleSection(this)">Unsolved Cases (${area.unsolved.length})</button>
+            <div class="pl-4 space-y-2 hidden">${unsolvedHTML}</div>`;
+        
+        container.appendChild(card);
+
+        const marker=L.circleMarker([area.lat,area.lng],{color:'red',radius:10,fillOpacity:0.7}).addTo(map);
+        marker.bindPopup(`<strong>${area.name}</strong><br>Total Crimes: ${area.solved.length+area.unsolved.length}`);
+    });
+
+    window.toggleSection=function(button){button.nextElementSibling.classList.toggle('hidden');};
+});
+</script>
+</body>
+</html>

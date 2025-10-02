@@ -24,7 +24,7 @@
       --accent-blue: #3b82f6;
       --border-color: #333333;
       /* NEW COLOR VARIABLES based on image a22f2e.png */
-      --deep-navy: #151b2c; /* Deeper background color for the stats section */
+      --deep-navy: #151b2c; /* Original deeper background color for the stats section */
       --card-deep-navy: #1a233b; /* Slightly darker card color */
       --bar-blue-deep: #4d7a96;
       --bar-teal: #6eb793;
@@ -83,7 +83,7 @@
       color: var(--text-primary);
     }
     .nav-links {
-      display: flex; 
+      display: none; /* Removed links as requested */
       gap: 2rem;
       align-items: center;
       flex-grow: 1; 
@@ -122,7 +122,7 @@
       background: var(--dark-surface);
       padding: 6rem 2rem;
       text-align: center;
-      background-image: url('https://placehold.co/1400x600/101010/8B5CF6/png?text=Cityscape+Night+View');
+      background-image: url('content/city.jpg');
       background-size: cover;
       background-position: center;
       position: relative;
@@ -175,8 +175,8 @@
     
     /* --- STATS & PLACES SECTION STYLES (UPDATED COLORS) --- */
     .stats-section {
-      /* Applying deeper navy background color */
-      background: var(--deep-navy); 
+      /* CHANGED: Using --dark-bg for pure black background */
+      background: var(--dark-bg); 
       padding: 3rem 2rem;
       max-width: 1400px;
       margin: 0 auto;
@@ -209,7 +209,7 @@
       gap: 1.5rem;
     }
     .stat-card {
-      /* Applying deep navy card color */
+      /* Card background should remain the deep navy for contrast against the new black background */
       background: var(--card-deep-navy); 
       border-radius: 12px;
       padding: 1.5rem;
@@ -267,7 +267,7 @@
       color: var(--text-primary);
     }
     .bar-chart {
-      /* Applying card deep navy background color */
+      /* Bar chart container background should also be deep navy for contrast */
       background: var(--card-deep-navy); 
       padding: 1.5rem;
       border-radius: 12px;
@@ -356,7 +356,8 @@
     }
     .sidebar-panel {
         width: 350px;
-        background: var(--dark-card);
+        /* CHANGED: Use the deep navy card color for consistency with section 2 */
+        background: var(--card-deep-navy); 
         border-radius: 12px;
         padding: 2.5rem 2rem; /* Increased vertical padding */
         flex-shrink: 0;
@@ -409,7 +410,8 @@
         font-weight: 600;
     }
     .sidebar-panel .btn-secondary {
-        background: var(--dark-card);
+        /* Keep secondary button color consistent with dark theme */
+        background: var(--dark-card); 
         color: white;
         border: 1px solid var(--border-color);
     }
@@ -456,6 +458,79 @@
       text-decoration: none;
       justify-content: center;
     }
+    .btn-action {
+        background: var(--accent-purple);
+        color: white;
+    }
+
+    /* Custom Modal Styles (for non-blocking UI) */
+    .modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.7);
+        display: none; 
+        justify-content: center;
+        align-items: center;
+        z-index: 1000;
+        opacity: 0;
+        transition: opacity 0.3s ease-in-out;
+    }
+
+    .modal-overlay.show {
+        display: flex;
+        opacity: 1;
+    }
+    
+    .modal-content {
+        background: var(--dark-card);
+        border-radius: 12px;
+        padding: 1.5rem;
+        width: 90%;
+        max-width: 400px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+        transform: translateY(-20px);
+        transition: transform 0.3s ease-in-out;
+    }
+
+    .modal-overlay.show .modal-content {
+        transform: translateY(0);
+    }
+
+    .modal-message {
+        font-size: 1.1rem;
+        margin-bottom: 1.5rem;
+        color: var(--text-primary);
+    }
+    .modal-icon {
+        font-size: 2rem;
+        color: var(--accent-purple);
+        margin-bottom: 1rem;
+    }
+
+    .modal-buttons {
+        display: flex;
+        justify-content: flex-end;
+        gap: 0.75rem;
+    }
+
+    /* Adjust button styles for modal */
+    .modal-buttons .btn {
+        padding: 0.6rem 1.25rem;
+        font-size: 0.9rem;
+    }
+
+    .modal-buttons .btn-secondary {
+        background: var(--dark-surface);
+        color: var(--text-primary);
+    }
+    .modal-buttons .btn-secondary:hover {
+        background: var(--border-color);
+    }
+    /* End Custom Modal Styles */
+
 
     /* Responsive adjustments */
     @media (max-width: 1024px) {
@@ -494,9 +569,6 @@
         .stats-section, .map-section {
             padding: 1.5rem 1rem;
         }
-        .nav-links {
-            display: none; /* Hide navigation links on small screens */
-        }
     }
   </style>
 </head>
@@ -509,17 +581,26 @@
   <!-- CUSTOM TOOLTIP CONTAINER -->
   <div id="custom-tooltip"></div>
 
+  <!-- Custom Modal HTML Structure -->
+  <div id="custom-modal-overlay" class="modal-overlay" onclick="closeModal(event)">
+    <div class="modal-content">
+      <div id="modal-icon" class="modal-icon" style="text-align: center;"></div>
+      <div id="modal-message" class="modal-message" style="text-align: center;"></div>
+      <div id="modal-buttons" class="modal-buttons">
+        <!-- Buttons injected by JS -->
+      </div>
+    </div>
+  </div>
+  <!-- End Custom Modal HTML Structure -->
+
+
   <!-- HEADER -->
   <div class="header">
     <div class="logo">
       <div class="logo-icon">🛡️</div>
       <div class="logo-text">My Safety</div>
     </div>
-    <div class="nav-links">
-      <a href="#">Report Crime</a>
-      <a href="#">Report Status</a>
-      <a href="#">Admin Dashboard</a>
-    </div>
+    <!-- Removed nav-links div -->
     <a href="#" class="login-btn">
       <span>→</span>
       Login
@@ -532,8 +613,9 @@
       <h1 class="hero-title">Navigate Your World Safely</h1>
       <p class="hero-subtitle">Get AI-powered safest routes, view crime heatmaps, and contribute to a safer community.</p>
       <div class="hero-actions">
-        <a href="#" class="btn btn-primary btn-hero-primary">Find a Safe Route</a>
-        <a href="#" class="btn btn-secondary btn-hero-secondary">Report an Incident</a>
+        <!-- Buttons call new function to enforce login -->
+        <a href="#" class="btn btn-primary btn-hero-primary" onclick="checkLoginRequirement(event, 'Safe Route Finder')">Find a Safe Route</a>
+        <a href="#" class="btn btn-secondary btn-hero-secondary" onclick="checkLoginRequirement(event, 'Incident Report Form')">Report an Incident</a>
       </div>
     </div>
   </div>
@@ -651,6 +733,7 @@
               <span class="lock-icon">🔒</span>
               <h3 class="panel-title">Find Your Safest Route</h3>
               <p class="panel-description">You need to be logged in to access this feature.</p>
+              <!-- Links call login screen -->
               <a href="#" class="btn btn-primary" style="margin-top: 1rem;">Login</a>
               <a href="#" class="btn btn-secondary">Create an Account</a>
           </div>
@@ -669,6 +752,65 @@
   </div>
 
   <script>
+    // --- Custom Modal Functions (Replacing alert and confirm/prompt) ---
+    const modalOverlay = document.getElementById('custom-modal-overlay');
+    const modalMessage = document.getElementById('modal-message');
+    const modalButtons = document.getElementById('modal-buttons');
+    const modalIcon = document.getElementById('modal-icon');
+
+    function closeModal(event) {
+        // Only close if clicking the overlay itself, not content inside
+        if (event && event.target !== modalOverlay) {
+            return;
+        }
+        modalOverlay.classList.remove('show');
+    }
+
+    /**
+     * Shows a custom alert modal.
+     * @param {string} message - The message to display.
+     */
+    function showAlert(message) {
+        modalIcon.innerHTML = '⚠️';
+        modalMessage.innerHTML = message;
+        modalButtons.innerHTML = ''; // Clear previous buttons
+
+        const okButton = document.createElement('button');
+        okButton.className = 'btn btn-action';
+        okButton.textContent = 'OK';
+        okButton.onclick = closeModal;
+        modalButtons.appendChild(okButton);
+
+        modalOverlay.classList.add('show');
+    }
+
+    /**
+     * Custom modal to require user login.
+     * @param {string} featureName - The name of the feature the user tried to access.
+     */
+    function checkLoginRequirement(event, featureName) {
+        event.preventDefault();
+
+        modalIcon.innerHTML = '🔒';
+        modalMessage.innerHTML = `You must be **logged in** to use the ${featureName}. Please log in or create an account.`;
+        modalButtons.innerHTML = '';
+
+        const loginButton = document.createElement('a');
+        loginButton.href = '#'; // Placeholder for login page
+        loginButton.className = 'btn btn-primary btn-action';
+        loginButton.textContent = 'Login';
+        loginButton.onclick = closeModal; // In a real app, this would redirect
+        
+        const cancelButton = document.createElement('button');
+        cancelButton.className = 'btn btn-secondary';
+        cancelButton.textContent = 'Cancel';
+        cancelButton.onclick = closeModal;
+
+        modalButtons.appendChild(cancelButton);
+        modalButtons.appendChild(loginButton);
+        modalOverlay.classList.add('show');
+    }
+
     // --- Tooltip Functions (NEW) ---
     const tooltip = document.getElementById('custom-tooltip');
 
@@ -728,7 +870,7 @@
         const map = L.map('heatmap-map', {
             center: [DHAKA_LAT, DHAKA_LNG],
             zoom: INITIAL_ZOOM,
-            // REMOVED: scrollWheelZoom: false - Re-enabling scroll wheel zoom
+            // scrollWheelZoom is now enabled by default 
         });
 
         // Add OSM (OpenStreetMap) tiles
